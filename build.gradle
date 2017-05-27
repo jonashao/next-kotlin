@@ -21,6 +21,11 @@ allprojects {
         maven { url 'https://maven.google.com' }
         mavenCentral()
     }
+    ext {
+        // Android config
+        androidBuildToolsVersion = "25.0.2"
+        butterknifeVersion = "8.6.0"
+    }
 }
 
 task clean(type: Delete) {

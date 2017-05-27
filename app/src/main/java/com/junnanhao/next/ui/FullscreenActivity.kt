@@ -1,11 +1,13 @@
-package com.junnanhao.next
+package com.junnanhao.next.ui
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import com.junnanhao.next.R
 import com.junnanhao.next.model.Song
 import com.junnanhao.next.player.Player
+import com.junnanhao.next.ui.player.PlayerFragment
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -50,11 +52,12 @@ class FullscreenActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_fullscreen)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
         mVisible = true
+        supportFragmentManager.beginTransaction()
+                .add(R.id.fullscreen_content, PlayerFragment(), "player-fragment")
+                .commit()
         mControlsView = findViewById(R.id.fullscreen_content_controls)
         mContentView = findViewById(R.id.fullscreen_content)
 
@@ -77,7 +80,6 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     private fun toggle() {
-
         val player: Player = Player.instance
         val song: Song = Song(path = "http://mr3.doubanio.com/40a64e7cac98fff34c43c03f48d4a62c/0/fm/song/p2722754_128k.mp3", duration = 189000)
         player.play(song)
