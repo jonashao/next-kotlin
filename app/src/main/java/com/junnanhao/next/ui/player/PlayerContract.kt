@@ -1,5 +1,6 @@
 package com.junnanhao.next.ui.player
 
+import android.content.Context
 import com.junnanhao.next.model.Song
 
 /**
@@ -18,6 +19,6 @@ interface PlayerContract {
         fun next()
         fun pause()
         fun start()
-        fun scan()
+        fun scan(context: Context)
     }
 }

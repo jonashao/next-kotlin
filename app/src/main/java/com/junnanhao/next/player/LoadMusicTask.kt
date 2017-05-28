@@ -3,7 +3,8 @@ package com.junnanhao.next.player
 import android.content.Context
 import android.database.Cursor
 import android.provider.MediaStore
-import android.support.v4.content.Loader
+import android.support.v4.content.ContentResolverCompat
+import android.support.v4.os.CancellationSignal
 import android.util.Log
 import com.junnanhao.next.model.Song
 import io.reactivex.Observable
@@ -26,8 +27,17 @@ class LoadMusicTask(private var context: Context) {
     private val ORDER_BY = MediaStore.Audio.Media.DISPLAY_NAME + " ASC"
     private val PROJECTIONS = arrayOf(MediaStore.Audio.Media.DATA, // the real path
             MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.MIME_TYPE, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.IS_RINGTONE, MediaStore.Audio.Media.IS_MUSIC, MediaStore.Audio.Media.IS_NOTIFICATION, MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.SIZE)
+    private var cancellationSignal: CancellationSignal? = null
+    fun load() {
+        cancellationSignal = CancellationSignal()
+        var cursor: Cursor = ContentResolverCompat.query(
+                context.contentResolver,
+                MEDIA_URI,
+                PROJECTIONS,
+                WHERE,
+                null,
+                ORDER_BY, cancellationSignal)
 
-    fun onLoadFinished(cursor: Cursor) {
         Observable.just(cursor)
                 .flatMap { cursor ->
                     val songs: ArrayList<Song> = ArrayList()
@@ -35,9 +45,12 @@ class LoadMusicTask(private var context: Context) {
                         cursor.moveToFirst()
                         do {
                             val song = cursorToMusic(cursor)
+                            System.out.println(song.toString())
                             songs.add(song)
                         } while (cursor.moveToNext())
                     }
+                    System.out.println("size = " + songs.size)
+                    Log.d(TAG, "song size = " + songs.size)
                     Observable.fromArray(songs)
                 }
                 .doOnNext {
@@ -49,11 +62,15 @@ class LoadMusicTask(private var context: Context) {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
                     //                    mView!!.showProgress()
+                    t: ArrayList<Song>? ->
+                    Log.d(TAG, "onNext: size=" + t?.size)
                 }, {
                     //                    mView!!.hideProgress()
+                    t: Throwable? ->
+                    Log.e(TAG, "onError: ", t)
                 }, {
+                    cursor.close()
                     //                    mView!!.hideProgress()
-//                    Log.e(TAG, "onError: ", throwable)
                 }, {
                     //                    mView!!.onLocalMusicLoaded(songs)
 //                    mView!!.emptyView(songs.isEmpty())

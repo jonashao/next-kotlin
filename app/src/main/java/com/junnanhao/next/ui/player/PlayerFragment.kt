@@ -38,6 +38,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
 
     @OnClick(R.id.container)
     fun play() {
+        presenter?.scan(context)
         val player: Player = Player.instance
         val song: Song = Song(path = "http://mr3.doubanio.com/40a64e7cac98fff34c43c03f48d4a62c/0/fm/song/p2722754_128k.mp3", duration = 189000)
         player.play(song)
