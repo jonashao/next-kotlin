@@ -1,5 +1,7 @@
 package com.junnanhao.next.model
 
+import io.realm.RealmList
+import io.realm.RealmObject
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -11,11 +13,11 @@ import kotlin.collections.ArrayList
 @Suppress("UNUSED")
 open class PlayList(var id: Long = 0,
                     var name: String = "",
-                    var songs: ArrayList<Song> = ArrayList<Song>(),
+                    var songs: RealmList<Song> = RealmList<Song>(),
                     var createdAt: Date = Date(),
                     var updatedAt: Date = Date(),
                     var playingIndex: Int = -1
-) {
+) : RealmObject() {
     var numOfSongs: Int = 0
         get() = songs.size
 

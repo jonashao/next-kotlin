@@ -2,6 +2,7 @@
 
 buildscript {
     ext.kotlin_version = '1.1.2-4'
+    ext.realm_version = '3.3.0'
     repositories {
         maven { url 'https://maven.google.com' }
         jcenter()
@@ -9,7 +10,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.0-alpha1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
+        classpath "io.realm:realm-gradle-plugin:$realm_version"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -25,6 +26,8 @@ allprojects {
         // Android config
         androidBuildToolsVersion = "25.0.2"
         butterknifeVersion = "8.6.0"
+        rxjavaVersion = '2.0.6'
+        rxandroidVersion = '2.0.1'
     }
 }
 

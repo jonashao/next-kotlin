@@ -18,5 +18,6 @@ interface PlayerContract {
         fun next()
         fun pause()
         fun start()
+        fun scan()
     }
 }

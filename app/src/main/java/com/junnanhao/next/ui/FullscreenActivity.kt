@@ -4,9 +4,9 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import butterknife.ButterKnife
+import butterknife.OnLongClick
 import com.junnanhao.next.R
-import com.junnanhao.next.model.Song
-import com.junnanhao.next.player.Player
 import com.junnanhao.next.ui.player.PlayerFragment
 
 /**
@@ -53,6 +53,7 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fullscreen)
+        ButterKnife.bind(this)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         mVisible = true
         supportFragmentManager.beginTransaction()
@@ -62,7 +63,7 @@ class FullscreenActivity : AppCompatActivity() {
         mContentView = findViewById(R.id.fullscreen_content)
 
         // Set up the user interaction to manually show or hide the system UI.
-        mContentView!!.setOnClickListener { toggle() }
+//        mContentView!!.setOnClickListener { toggle() }
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
@@ -79,11 +80,14 @@ class FullscreenActivity : AppCompatActivity() {
         delayedHide(100)
     }
 
-    private fun toggle() {
-        val player: Player = Player.instance
-        val song: Song = Song(path = "http://mr3.doubanio.com/40a64e7cac98fff34c43c03f48d4a62c/0/fm/song/p2722754_128k.mp3", duration = 189000)
-        player.play(song)
-        System.out.println("toggle playing:" + song.path)
+    @OnLongClick(R.id.fullscreen_content)
+     fun toggle(): Boolean {
+        if (mVisible) {
+            hide()
+        } else {
+            show()
+        }
+        return true
     }
 
     private fun hide() {

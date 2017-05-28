@@ -21,7 +21,6 @@ class Player private constructor() : IPlayer {
             //todo: notify playing status changed
             return true
         }
-
         if (playList.prepare()) {
             currentSong = playList.currentSong
             try {
@@ -41,6 +40,8 @@ class Player private constructor() : IPlayer {
         }
         return false
     }
+
+
 
     override fun play(song: Song): Boolean {
         playList.reset(song = song)
