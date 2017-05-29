@@ -1,6 +1,5 @@
 package com.junnanhao.next.ui.player
 
-import android.content.Context
 import com.junnanhao.next.data.SongsRepository
 import com.junnanhao.next.data.model.Song
 import com.junnanhao.next.player.Player
@@ -37,6 +36,14 @@ class PlayerPresenter @Inject constructor(
         player.play()
     }
 
+    override fun playPause() {
+        if (player.isPlaying()) {
+            pause()
+        } else {
+            play()
+        }
+    }
+
 
     override fun next() {
         val realm: Realm = Realm.getDefaultInstance()
@@ -47,7 +54,7 @@ class PlayerPresenter @Inject constructor(
             player.play(song)
             mView.showSongInfo(song)
         } else {
-//            scan()
+            scan()
         }
     }
 

@@ -81,7 +81,6 @@ class PlayerActivity : AppCompatActivity() {
                 .build()
                 .inject(this)
 
-        mPresenter.scan()
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {

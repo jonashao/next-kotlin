@@ -28,8 +28,8 @@ class Player private constructor() : IPlayer {
                 player.reset()
                 player.setAudioStreamType(AudioManager.STREAM_MUSIC)
                 player.setDataSource(currentSong?.path)
-                player.prepare()
-                player.start()
+                player.setOnPreparedListener { player.start() }
+                player.prepareAsync()
                 // todo: notify playing status changed
             } catch (e: IOException) {
                 // todo: notify playing status changed
@@ -40,7 +40,6 @@ class Player private constructor() : IPlayer {
         }
         return false
     }
-
 
 
     override fun play(song: Song): Boolean {

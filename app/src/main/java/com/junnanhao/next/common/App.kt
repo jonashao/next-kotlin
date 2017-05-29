@@ -31,7 +31,7 @@ class App : Application() {
     fun initializeRealm() {
         Realm.init(this)
         val realmConfig = RealmConfiguration.Builder().build()
-        Realm.deleteRealm(realmConfig) // Delete Realm between app restarts.
+//        Realm.deleteRealm(realmConfig) // Delete Realm between app restarts.
         Realm.setDefaultConfiguration(realmConfig)
 
         Stetho.initialize(
