@@ -28,6 +28,7 @@ allprojects {
         butterknifeVersion = "8.6.0"
         rxjavaVersion = '2.0.6'
         rxandroidVersion = '2.0.1'
+        daggerVersion = "2.6"
     }
 }
 

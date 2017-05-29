@@ -1,4 +1,4 @@
-package com.junnanhao.next.ui
+package com.junnanhao.next.ui.player
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -7,13 +7,15 @@ import android.view.View
 import butterknife.ButterKnife
 import butterknife.OnLongClick
 import com.junnanhao.next.R
+import com.junnanhao.next.common.App
 import com.junnanhao.next.ui.player.PlayerFragment
+import javax.inject.Inject
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-class FullscreenActivity : AppCompatActivity() {
+class PlayerActivity : AppCompatActivity() {
     private val mHideHandler = Handler()
     private var mContentView: View? = null
     private val mHidePart2Runnable = Runnable {
@@ -49,6 +51,8 @@ class FullscreenActivity : AppCompatActivity() {
         }
         false
     }
+    @Inject lateinit var mPresenter: PlayerPresenter
+        set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,8 +60,9 @@ class FullscreenActivity : AppCompatActivity() {
         ButterKnife.bind(this)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         mVisible = true
+        val playerFragment = PlayerFragment.instance()
         supportFragmentManager.beginTransaction()
-                .add(R.id.fullscreen_content, PlayerFragment(), "player-fragment")
+                .add(R.id.fullscreen_content, playerFragment, "player-fragment")
                 .commit()
         mControlsView = findViewById(R.id.fullscreen_content_controls)
         mContentView = findViewById(R.id.fullscreen_content)
@@ -69,6 +74,14 @@ class FullscreenActivity : AppCompatActivity() {
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener)
+
+        DaggerPlayerComponent.builder()
+                .songsRepositoryComponent((application as App).songsRepositoryComponent)
+                .playerPresenterModule(PlayerPresenterModule(playerFragment))
+                .build()
+                .inject(this)
+
+        mPresenter.scan()
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -81,7 +94,7 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     @OnLongClick(R.id.fullscreen_content)
-     fun toggle(): Boolean {
+    fun toggle(): Boolean {
         if (mVisible) {
             hide()
         } else {

@@ -1,6 +1,6 @@
 package com.junnanhao.next.player
 
-import com.junnanhao.next.model.Song
+import com.junnanhao.next.data.model.Song
 
 /**
  * Created by Jonas on 2017/5/26.

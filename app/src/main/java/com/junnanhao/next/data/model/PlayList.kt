@@ -1,4 +1,4 @@
-package com.junnanhao.next.model
+package com.junnanhao.next.data.model
 
 import io.realm.RealmList
 import io.realm.RealmObject

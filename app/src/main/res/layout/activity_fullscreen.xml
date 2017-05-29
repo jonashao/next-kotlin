@@ -3,9 +3,9 @@
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:background="#0099cc"
-             tools:context="com.junnanhao.next.ui.FullscreenActivity">
+             tools:context="com.junnanhao.next.ui.player.PlayerActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
+    <!-- The primary full-scrmViewview. This can be replaced with whatemViewview
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
     <FrameLayout

@@ -1,7 +1,10 @@
-package com.junnanhao.next
+package com.junnanhao.next.common
 
 import android.app.Application
 import com.facebook.stetho.Stetho
+import com.junnanhao.next.data.DaggerSongsRepositoryComponent
+import com.junnanhao.next.data.SongsRepositoryComponent
+import com.junnanhao.next.di.ApplicationModule
 import com.uphyca.stetho_realm.RealmInspectorModulesProvider
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -14,6 +17,18 @@ import io.realm.RealmConfiguration
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+        initializeRealm()
+        initializeDagger()
+    }
+
+    private fun initializeDagger() {
+        songsRepositoryComponent = DaggerSongsRepositoryComponent
+                .builder()
+                .applicationModule(ApplicationModule(this))
+                .build()
+    }
+
+    fun initializeRealm() {
         Realm.init(this)
         val realmConfig = RealmConfiguration.Builder().build()
         Realm.deleteRealm(realmConfig) // Delete Realm between app restarts.
@@ -25,4 +40,10 @@ class App : Application() {
                         .enableWebKitInspector(RealmInspectorModulesProvider.builder(this).build())
                         .build())
     }
+
+
+    lateinit var songsRepositoryComponent: SongsRepositoryComponent
+        get
+
 }
+

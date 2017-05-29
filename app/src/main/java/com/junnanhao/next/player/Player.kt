@@ -2,8 +2,8 @@ package com.junnanhao.next.player
 
 import android.media.AudioManager
 import android.media.MediaPlayer
-import com.junnanhao.next.model.PlayList
-import com.junnanhao.next.model.Song
+import com.junnanhao.next.data.model.PlayList
+import com.junnanhao.next.data.model.Song
 import java.io.IOException
 
 
