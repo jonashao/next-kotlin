@@ -31,7 +31,10 @@ class Player private constructor() : IPlayer {
                 player.reset()
                 player.setAudioStreamType(AudioManager.STREAM_MUSIC)
                 player.setDataSource(currentSong?.path)
-                player.setOnPreparedListener { player.start() }
+                player.setOnPreparedListener {
+                    playbackCallback?.onPrepared(currentSong)
+                    player.start()
+                }
                 player.prepareAsync()
                 player.setOnCompletionListener({ playbackCallback?.onComplete() })
                 // todo: notify playing status changed
@@ -106,4 +109,5 @@ class Player private constructor() : IPlayer {
 
 interface PlaybackCallback {
     fun onComplete()
+    fun onPrepared(song: Song?)
 }

@@ -13,7 +13,7 @@ import com.junnanhao.next.data.model.Song
 interface PlayerContract {
     interface View : BaseView<Presenter> {
         fun showError()
-        fun showSongInfo(song: Song)
+        fun showSongInfo(song: Song?)
     }
 
     interface Presenter : BasePresenter {

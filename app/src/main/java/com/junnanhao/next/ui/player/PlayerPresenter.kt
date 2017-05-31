@@ -24,6 +24,10 @@ class PlayerPresenter @Inject constructor(
 
     init {
         player.playbackCallback = object : PlaybackCallback {
+            override fun onPrepared(song: Song?) {
+                mView.showSongInfo(song)
+            }
+
             override fun onComplete() {
                 next()
             }
@@ -61,7 +65,6 @@ class PlayerPresenter @Inject constructor(
             val random = Random()
             val song = list.get(random.nextInt(list.size))
             player.play(song)
-            mView.showSongInfo(song)
         } else {
             scan()
         }

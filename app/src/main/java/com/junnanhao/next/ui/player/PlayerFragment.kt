@@ -108,13 +108,13 @@ class PlayerFragment : Fragment(), PlayerContract.View {
 
     private var LightVibrantColor: Int = 0
 
-    override fun showSongInfo(song: Song) {
-        title.text = song.title
-        artist.text = song.artist
+    override fun showSongInfo(song: Song?) {
+        title.text = song?.title
+        artist.text = song?.artist
         Timber.wtf("$song")
         var mBitmapCover: Bitmap? = null
 
-        if (song.art != null) {
+        if (song?.art != null) {
             val file = File(song.art)
             if (file.exists()) {
                 val input = FileInputStream(file)
