@@ -1,11 +1,10 @@
 package com.junnanhao.next.ui.player
 
 import android.Manifest
+import android.content.Context
+import android.graphics.*
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -15,18 +14,13 @@ import butterknife.OnClick
 import butterknife.OnTouch
 import com.junnanhao.next.R
 import com.junnanhao.next.data.model.Song
-import android.view.MotionEvent
-import android.view.GestureDetector
 import android.support.v4.view.GestureDetectorCompat
 import timber.log.Timber
-import android.graphics.BitmapFactory
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.support.v4.content.ContextCompat
 import android.support.v7.graphics.Palette
+import android.view.*
 import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.frag_player.*
 import java.io.File
@@ -43,6 +37,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     @BindView(R.id.tv_song_artist) lateinit var artist: TextView
     @BindView(R.id.img_art) lateinit var art: ImageView
     @BindView(R.id.container) lateinit var background: ViewGroup
+    lateinit var rect: Rect
 
     companion object {
         fun instance(): PlayerFragment {
@@ -64,9 +59,19 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view: View = inflater!!.inflate(R.layout.frag_player, container, false)
         ButterKnife.bind(this, view)
-
         checkPermission()
+        measure()
         return view
+    }
+
+    fun measure() {
+        val wm: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val size: Point = Point()
+        wm.defaultDisplay.getSize(size)
+        rect = Rect(0,
+                (size.y * 0.1).toInt(),
+                size.x,
+                (size.y * 0.9).toInt())
     }
 
 
@@ -74,18 +79,26 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         super.onCreate(savedInstanceState)
         mDetector = GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                try {
-                    if (Math.abs(e1.y - e2.y) > SWIPE_MAX_OFF_PATH) {
-                        return false
+                if (rect.contains(
+                        if (e1.x < e2.x) (e1.x).toInt() else e2.x.toInt(),
+                        if (e1.y < e2.y) (e1.y).toInt() else e2.y.toInt(),
+                        if (e1.x < e2.x) (e2.x).toInt() else e1.x.toInt(),
+                        if (e1.y < e2.y) (e2.y).toInt() else e1.y.toInt())) {
+                    try {
+                        if (Math.abs(e1.y - e2.y) > SWIPE_MAX_OFF_PATH) {
+                            return false
+                        }
+
+                        if (e1.x - e2.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                            // left swipe
+                            mPresenter.next()
+                        } else if (e2.x - e1.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                            // right swipe
+                        }
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    if (e1.x - e2.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                        // left swipe
-                        mPresenter.next()
-                    } else if (e2.x - e1.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                        // right swipe
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
                 return false
             }
