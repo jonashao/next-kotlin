@@ -1,9 +1,12 @@
 package com.junnanhao.next.data
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.provider.MediaStore
 import android.support.v4.content.ContentResolverCompat
+import android.support.v4.content.ContextCompat
 import android.support.v4.os.CancellationSignal
 import com.junnanhao.next.data.model.Song
 import io.reactivex.Observable
@@ -30,6 +33,12 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
     private var cancellationSignal: CancellationSignal? = null
 
     override fun scanMusic(): Observable<MutableList<Song>> {
+
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            return Observable.fromArray()
+        }
+
         cancellationSignal = CancellationSignal()
         val cursor: Cursor = ContentResolverCompat.query(
                 context.contentResolver,
@@ -79,6 +88,7 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
                     cursor.close()
                     t?.printStackTrace()
                 }
+
 
     }
 

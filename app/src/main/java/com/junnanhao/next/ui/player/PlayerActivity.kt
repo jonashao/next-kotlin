@@ -1,5 +1,6 @@
 package com.junnanhao.next.ui.player
 
+import android.Manifest
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -10,6 +11,9 @@ import com.junnanhao.next.R
 import com.junnanhao.next.common.App
 import com.junnanhao.next.ui.player.PlayerFragment
 import javax.inject.Inject
+import android.Manifest.permission
+import com.tbruyelle.rxpermissions2.RxPermissions
+
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.

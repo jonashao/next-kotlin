@@ -1,5 +1,6 @@
 package com.junnanhao.next.ui.player
 
+import android.Manifest
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
@@ -24,9 +25,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.VectorDrawable
 import android.support.v4.content.ContextCompat
 import android.support.v7.graphics.Palette
+import com.tbruyelle.rxpermissions2.RxPermissions
+import kotlinx.android.synthetic.main.frag_player.*
 import java.io.File
 import java.io.FileInputStream
 
@@ -62,9 +64,11 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view: View = inflater!!.inflate(R.layout.frag_player, container, false)
         ButterKnife.bind(this, view)
-        mPresenter.next()
+
+        checkPermission()
         return view
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,11 +130,12 @@ class PlayerFragment : Fragment(), PlayerContract.View {
             }
         }
         if (mBitmapCover == null) {
-            val drawable: Drawable = ContextCompat.getDrawable(context, R.drawable.ic_music_note_black_24dp)
+            val drawable: Drawable = ContextCompat.getDrawable(context, R.drawable.ic_music)
             mBitmapCover = drawable.toBitmap()
         }
 
         art.setImageBitmap(mBitmapCover)
+        art.scaleType = ImageView.ScaleType.CENTER_CROP
 
         val palette = Palette.from(mBitmapCover).generate()
         DarkVibrantColor = palette.getDarkVibrantColor(Color.GRAY)
@@ -139,7 +144,36 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         background.setBackgroundColor(DarkMutedColor)
         title.setTextColor(LightVibrantColor)
         artist.setTextColor(LightVibrantColor)
+    }
 
+    override fun showPermissionNotGranted() {
+        title.setText(getString(R.string.require_permission))
+        artist.setText(getString(R.string.permission_reason))
+        art.setImageResource(R.drawable.ic_permission)
+        art.scaleType = ImageView.ScaleType.CENTER
+        container.setOnClickListener {
+            checkPermission()
+        }
+    }
+
+    fun checkPermission() {
+        Timber.wtf("check permission")
+        RxPermissions(activity)
+                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                .subscribe({ granted ->
+                    if (granted) { // Always true pre-M
+                        mPresenter.next()
+                        showLoading()
+                        container?.setOnClickListener { mPresenter.playPause() }
+                    } else {
+                        showPermissionNotGranted()
+                    }
+                })
+    }
+
+    override fun showLoading() {
+        title.setText(getString(R.string.loading))
+        artist.setText("")
     }
 
     fun Drawable.toBitmap(): Bitmap {

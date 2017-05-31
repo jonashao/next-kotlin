@@ -6,4 +6,7 @@
     <string name="song_title">song title</string>
     <string name="artist">artist</string>
     <string name="album_art">album art</string>
+    <string name="loading">Loading...</string>
+    <string name="require_permission">Please grant permission</string>
+    <string name="permission_reason">to scan local music files</string>
 </resources>
