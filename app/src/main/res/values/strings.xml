@@ -3,4 +3,7 @@
 
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="song_title">song title</string>
+    <string name="artist">artist</string>
+    <string name="album_art">album art</string>
 </resources>

@@ -2,6 +2,7 @@ package com.junnanhao.next.ui.player
 
 import com.junnanhao.next.data.SongsRepository
 import com.junnanhao.next.data.model.Song
+import com.junnanhao.next.player.PlaybackCallback
 import com.junnanhao.next.player.Player
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.realm.Realm
@@ -20,6 +21,14 @@ class PlayerPresenter @Inject constructor(
 
     val player: Player = Player.instance
     val realm: Realm = Realm.getDefaultInstance()
+
+    init {
+        player.playbackCallback = object : PlaybackCallback {
+            override fun onComplete() {
+                next()
+            }
+        }
+    }
 
     override fun scan() {
         mSongsRepository.scanMusic()

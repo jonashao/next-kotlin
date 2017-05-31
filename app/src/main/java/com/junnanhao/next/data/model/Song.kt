@@ -4,8 +4,10 @@ import android.database.Cursor
 import android.media.MediaMetadataRetriever
 import android.provider.MediaStore
 import android.text.TextUtils
+import com.github.ajalt.timberkt.Timber
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
+//import timber.log.Timber
 import java.io.File
 
 /**
@@ -20,11 +22,12 @@ open class Song(
         var artist: String = "",
         var displayName: String = "",
         var size: Int = 0,
-        var album: String = "") : RealmObject() {
+        var album: String = "",
+        var albumId: Long = 0) : RealmObject() {
 
-    override fun toString(): String {
-        return "Song(path='$path', duration=$duration, title='$title', artist='$artist', displayName='$displayName')"
-    }
+    var art: String? = null
+
+
 
     fun isSongValid(): Boolean {
         return duration > MIN_DURATION && artist != UNKNOWN
@@ -63,38 +66,44 @@ open class Song(
         return result
     }
 
+    override fun toString(): String {
+        return "Song(id=$id, path='$path', title='$title', artist='$artist', album='$album', albumId=$albumId, art=$art)"
+    }
+
 
     companion object {
         val MIN_DURATION: Int = 40000
         val UNKNOWN: String = "<unknown>"
 
         fun fromCursor(cursor: Cursor): Song? {
-            val realPath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
-            val songFile = File(realPath)
-            var song: Song?
-            if (songFile.exists()) {
-                // Using song parsed from file to avoid encoding problems
-                song = fromFile(songFile)
-                if (song != null) {
-                    return song
-                }
-            }
+            var song: Song? = null
             try {
+                val realPath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
+                val songFile = File(realPath)
+                if (songFile.exists()) {
+                    // Using song parsed from file to avoid encoding problems
+                    song = fromFile(songFile)
+                    if (song != null) {
+                        song.albumId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID))
+                        song.id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+                        return song
+                    }
+                }
                 var displayName = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME))
                 if (displayName.endsWith(".mp3")) {
                     displayName = displayName.substring(0, displayName.length - 4)
                 }
                 song = Song(displayName = displayName,
-                        id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)),
                         title = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
                         artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
                         album = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
+                        albumId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)),
                         path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
                         duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                        size = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)))
+                        size = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
+                        id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)))
             } catch (e: IllegalArgumentException) {
-                e.printStackTrace()
-                song = null
+                Timber.wtf(e)
             }
             return song
         }
@@ -128,5 +137,6 @@ open class Song(
             }
             return value
         }
+
     }
 }

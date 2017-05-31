@@ -21,8 +21,10 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
         private val MEDIA_URI = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         private val WHERE = MediaStore.Audio.Media.IS_MUSIC + "=1 AND " + MediaStore.Audio.Media.SIZE + ">0"
         private val ORDER_BY = MediaStore.Audio.Media.DISPLAY_NAME + " ASC"
-        private val PROJECTIONS = arrayOf(MediaStore.Audio.Media.DATA, // the real path
-                MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.MIME_TYPE, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.IS_RINGTONE, MediaStore.Audio.Media.IS_MUSIC, MediaStore.Audio.Media.IS_NOTIFICATION, MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.SIZE)
+        private val PROJECTIONS = arrayOf(MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.MIME_TYPE, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.IS_RINGTONE, MediaStore.Audio.Media.IS_MUSIC, MediaStore.Audio.Media.IS_NOTIFICATION, MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.SIZE, MediaStore.Audio.Media._ID, MediaStore.Audio.Media.ALBUM_ID)
+        private val ALBUM_URI = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
+        private val WHERE_ALBUM = MediaStore.Audio.Albums._ID + " = ?"
+        private val PROJECTIONS_ALBUM = arrayOf(MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_KEY, MediaStore.Audio.Albums.ALBUM_ART)
     }
 
     private var cancellationSignal: CancellationSignal? = null
@@ -54,6 +56,21 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
                 }
                 .doOnNext {
                     songs: MutableList<Song>? ->
+                    songs?.forEach { song: Song? ->
+                        val cursor1: Cursor = ContentResolverCompat.query(
+                                context.contentResolver,
+                                ALBUM_URI,
+                                PROJECTIONS_ALBUM,
+                                WHERE_ALBUM,
+                                arrayOf(song?.albumId.toString()), null, null)
+                        if (cursor1.count > 0) {
+                            if (cursor1.moveToFirst()) {
+                                song?.art = cursor1.getString(cursor1.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART))
+                            }
+                            System.out.println(song?.art)
+                        }
+                        cursor1.close()
+                    }
                     val realm: Realm = Realm.getDefaultInstance()
                     realm.executeTransaction({ realm -> realm.copyToRealmOrUpdate(songs) })
                 }
@@ -62,6 +79,7 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
                     cursor.close()
                     t?.printStackTrace()
                 }
+
     }
 
 

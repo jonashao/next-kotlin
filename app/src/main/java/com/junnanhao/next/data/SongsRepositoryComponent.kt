@@ -1,6 +1,6 @@
 package com.junnanhao.next.data
 
-import com.junnanhao.next.di.ApplicationModule
+import com.junnanhao.next.common.di.ApplicationModule
 import dagger.Component
 import javax.inject.Singleton
 

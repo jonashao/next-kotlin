@@ -1,4 +1,4 @@
-package com.junnanhao.next.di;
+package com.junnanhao.next.common.di;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

@@ -5,7 +5,6 @@ import io.realm.RealmObject
 import java.util.*
 import kotlin.collections.ArrayList
 
-
 /**
  * Created by Jonas on 2017/5/26.
  * play list
@@ -36,7 +35,6 @@ open class PlayList(var id: Long = 0,
         this.songs.add(song)
         playingIndex = NO_POSITION
     }
-
 
     companion object {
         val NO_POSITION: Int = -1

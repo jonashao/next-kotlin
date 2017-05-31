@@ -1,4 +1,4 @@
-package com.junnanhao.next.di
+package com.junnanhao.next.common.di
 
 import android.content.Context
 import com.junnanhao.next.common.App

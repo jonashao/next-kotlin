@@ -14,6 +14,9 @@ class Player private constructor() : IPlayer {
     private var playList: PlayList = PlayList()
     private var currentSong: Song? = null
 
+    var playbackCallback: PlaybackCallback? = null
+        set
+
     override fun play(): Boolean {
         if (isPause) {
             player.start()
@@ -30,6 +33,7 @@ class Player private constructor() : IPlayer {
                 player.setDataSource(currentSong?.path)
                 player.setOnPreparedListener { player.start() }
                 player.prepareAsync()
+                player.setOnCompletionListener({ playbackCallback?.onComplete() })
                 // todo: notify playing status changed
             } catch (e: IOException) {
                 // todo: notify playing status changed
@@ -98,4 +102,8 @@ class Player private constructor() : IPlayer {
     companion object {
         val instance: Player by lazy { Holder.INSTANCE }
     }
+}
+
+interface PlaybackCallback {
+    fun onComplete()
 }

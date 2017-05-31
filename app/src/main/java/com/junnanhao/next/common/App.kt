@@ -4,10 +4,13 @@ import android.app.Application
 import com.facebook.stetho.Stetho
 import com.junnanhao.next.data.DaggerSongsRepositoryComponent
 import com.junnanhao.next.data.SongsRepositoryComponent
-import com.junnanhao.next.di.ApplicationModule
+import com.junnanhao.next.common.di.ApplicationModule
 import com.uphyca.stetho_realm.RealmInspectorModulesProvider
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import timber.log.Timber
+
+//import timber.log.Timber
 
 
 /**
@@ -19,6 +22,11 @@ class App : Application() {
         super.onCreate()
         initializeRealm()
         initializeDagger()
+        initializeTimber()
+    }
+
+    private fun initializeTimber() {
+        Timber.plant(Timber.DebugTree())
     }
 
     private fun initializeDagger() {

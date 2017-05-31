@@ -1,7 +1,7 @@
 package com.junnanhao.next.ui.player
 
 import com.junnanhao.next.data.SongsRepositoryComponent
-import com.junnanhao.next.di.FragmentScoped
+import com.junnanhao.next.common.di.FragmentScoped
 import dagger.Component
 
 /**
