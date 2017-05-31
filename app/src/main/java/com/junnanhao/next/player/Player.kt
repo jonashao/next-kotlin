@@ -51,6 +51,7 @@ class Player private constructor() : IPlayer {
 
     override fun play(song: Song): Boolean {
         playList.reset(song = song)
+        isPause = currentSong == song
         return play()
     }
 

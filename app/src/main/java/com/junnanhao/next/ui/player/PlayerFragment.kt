@@ -43,7 +43,6 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         fun instance(): PlayerFragment {
             return PlayerFragment()
         }
-
         private val SWIPE_MIN_DISTANCE = 120
         private val SWIPE_MAX_OFF_PATH = 250
         private val SWIPE_THRESHOLD_VELOCITY = 200
@@ -69,9 +68,9 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         val size: Point = Point()
         wm.defaultDisplay.getSize(size)
         rect = Rect(0,
-                (size.y * 0.1).toInt(),
+                (size.y * 0.2).toInt(),
                 size.x,
-                (size.y * 0.9).toInt())
+                (size.y * 0.8).toInt())
     }
 
 
@@ -79,6 +78,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         super.onCreate(savedInstanceState)
         mDetector = GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                Timber.wtf("fling")
                 if (rect.contains(
                         if (e1.x < e2.x) (e1.x).toInt() else e2.x.toInt(),
                         if (e1.y < e2.y) (e1.y).toInt() else e2.y.toInt(),
@@ -100,7 +100,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
                         e.printStackTrace()
                     }
                 }
-                return false
+                return true
             }
         })
     }
