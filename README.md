@@ -1,9 +1,11 @@
 # next-kotlin
 Kotlin version of [Next music player](https://github.com/jonashao/next)
+
 *Welcome to join and contribute.*
 
-This is an extremely simple music player, only let user to swipe to skip , 
+This is an extremely simple music player, only letting user to swipe to skip , 
 or pause and start playing music.
+And, It super saves power, compared to wechat and facebook, its power consumption can be ignored.
 
 It might be a good example for learning Kotlin, android music player,
 mvp framework, dagger and Realm, since it's simple and clean.

@@ -1,14 +1,12 @@
 package com.junnanhao.next.common
 
 import android.app.Application
-import com.facebook.stetho.Stetho
+import com.junnanhao.next.BuildConfig
 import com.junnanhao.next.data.DaggerSongsRepositoryComponent
 import com.junnanhao.next.data.SongsRepositoryComponent
 import com.junnanhao.next.common.di.ApplicationModule
-import com.uphyca.stetho_realm.RealmInspectorModulesProvider
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import timber.log.Timber
 
 //import timber.log.Timber
 
@@ -17,17 +15,13 @@ import timber.log.Timber
  * Created by Jonas on 2017/5/28.
  * Custom Application
  */
-class App : Application() {
+open class App : Application() {
     override fun onCreate() {
         super.onCreate()
         initializeRealm()
         initializeDagger()
-        initializeTimber()
     }
 
-    private fun initializeTimber() {
-        Timber.plant(Timber.DebugTree())
-    }
 
     private fun initializeDagger() {
         songsRepositoryComponent = DaggerSongsRepositoryComponent
@@ -41,12 +35,6 @@ class App : Application() {
         val realmConfig = RealmConfiguration.Builder().build()
 //        Realm.deleteRealm(realmConfig) // Delete Realm between app restarts.
         Realm.setDefaultConfiguration(realmConfig)
-
-        Stetho.initialize(
-                Stetho.newInitializerBuilder(this)
-                        .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
-                        .enableWebKitInspector(RealmInspectorModulesProvider.builder(this).build())
-                        .build())
     }
 
 
