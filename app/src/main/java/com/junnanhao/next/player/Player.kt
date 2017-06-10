@@ -18,6 +18,9 @@ class Player private constructor() : IPlayer {
         set
 
     override fun play(): Boolean {
+        if (isPlaying()) {
+            return true
+        }
         if (isPause) {
             player.start()
             isPause = false
