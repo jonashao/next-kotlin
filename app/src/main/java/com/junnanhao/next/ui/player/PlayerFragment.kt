@@ -134,16 +134,14 @@ class PlayerFragment : Fragment(), PlayerContract.View {
                 return true
             }
         })
-    }
-
-
-    override fun onStart() {
-        super.onStart()
         activity.registerReceiver(mBecomingNoisyReceiver,
                 IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
         activity.registerReceiver(mHeadphonePluggedReceiver,
                 IntentFilter(Intent.ACTION_HEADSET_PLUG))
     }
+
+
+
 
     override fun onDestroy() {
         super.onDestroy()
