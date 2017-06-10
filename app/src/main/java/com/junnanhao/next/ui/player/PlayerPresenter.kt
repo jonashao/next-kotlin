@@ -1,5 +1,4 @@
 package com.junnanhao.next.ui.player
-
 import com.junnanhao.next.data.SongsRepository
 import com.junnanhao.next.data.model.Song
 import com.junnanhao.next.player.PlaybackCallback
@@ -37,13 +36,13 @@ class PlayerPresenter @Inject constructor(
         }
     }
 
+
     override fun scan() {
         mSongsRepository.scanMusic()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ next() },
                         { throwable: Throwable? -> Timber.wtf(throwable) },
                         { scanned = true })
-
     }
 
     @Inject
@@ -53,6 +52,10 @@ class PlayerPresenter @Inject constructor(
 
     override fun play() {
         player.play()
+    }
+
+    override fun duck() {
+        player.duck()
     }
 
     override fun playPause() {

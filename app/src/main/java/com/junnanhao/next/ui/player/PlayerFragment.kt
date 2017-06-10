@@ -1,7 +1,10 @@
 package com.junnanhao.next.ui.player
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.*
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -18,6 +21,7 @@ import android.support.v4.view.GestureDetectorCompat
 import timber.log.Timber
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.media.AudioManager
 import android.support.v4.content.ContextCompat
 import android.support.v7.graphics.Palette
 import android.view.*
@@ -55,6 +59,8 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     }
 
     lateinit var mDetector: GestureDetectorCompat
+    lateinit var mBecomingNoisyReceiver: BroadcastReceiver
+    lateinit var mHeadphonePluggedReceiver: BroadcastReceiver
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view: View = inflater!!.inflate(R.layout.frag_player, container, false)
@@ -64,19 +70,43 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         return view
     }
 
-    fun measure() {
-        val wm: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val size: Point = Point()
-        wm.defaultDisplay.getSize(size)
-        rect = Rect(0,
-                (size.y * 0.2).toInt(),
-                size.x,
-                (size.y * 0.8).toInt())
-    }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val result = (context.getSystemService(Context.AUDIO_SERVICE) as AudioManager).requestAudioFocus({
+            focusChange: Int ->
+            when (focusChange) {
+                AudioManager.AUDIOFOCUS_GAIN -> mPresenter.play()
+                AudioManager.AUDIOFOCUS_LOSS -> mPresenter.pause()
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    mPresenter.pause()
+                }
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> mPresenter.pause()
+            }
+        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+
+        if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            Toast.makeText(context, getString(R.string.warning_cannot_get_audio_focus), Toast.LENGTH_SHORT).show()
+        }
+
+        mBecomingNoisyReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
+                    Timber.wtf("become noisy")
+                    mPresenter.pause()
+                }
+            }
+        }
+        mHeadphonePluggedReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.getAction().equals(Intent.ACTION_HEADSET_PLUG)) {
+                    if (intent?.getIntExtra("state", -1) == 1) {
+                        Timber.wtf("Headset is plugged")
+                        mPresenter.start()
+                    }
+                }
+            }
+        }
+
         mDetector = GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
                 Timber.wtf("fling")
@@ -104,6 +134,32 @@ class PlayerFragment : Fragment(), PlayerContract.View {
                 return true
             }
         })
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+        activity.registerReceiver(mBecomingNoisyReceiver,
+                IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+        activity.registerReceiver(mHeadphonePluggedReceiver,
+                IntentFilter(Intent.ACTION_HEADSET_PLUG))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        activity.unregisterReceiver(mBecomingNoisyReceiver)
+        activity.unregisterReceiver(mHeadphonePluggedReceiver)
+    }
+
+
+    fun measure() {
+        val wm: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val size: Point = Point()
+        wm.defaultDisplay.getSize(size)
+        rect = Rect(0,
+                (size.y * 0.2).toInt(),
+                size.x,
+                (size.y * 0.8).toInt())
     }
 
     @OnClick(R.id.container)
@@ -191,6 +247,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         artist.setText("")
     }
 
+
     fun Drawable.toBitmap(): Bitmap {
         if (this is BitmapDrawable) {
             return bitmap
@@ -205,5 +262,6 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         draw(canvas)
         return bitmap
     }
+
 
 }

@@ -8,7 +8,6 @@ import com.junnanhao.next.data.model.Song
  * Created by Jonas on 2017/5/27.
  * player contract
  */
-@Suppress("UNUSED")
 interface PlayerContract {
     interface View : BaseView<Presenter> {
         fun showError(error:String)
@@ -22,6 +21,7 @@ interface PlayerContract {
         fun next()
         fun pause()
         fun play()
+        fun duck()
         fun playPause()
         fun scan()
     }

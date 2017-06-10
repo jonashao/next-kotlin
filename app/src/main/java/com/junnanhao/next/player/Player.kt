@@ -34,6 +34,7 @@ class Player private constructor() : IPlayer {
                 player.setOnPreparedListener {
                     playbackCallback?.onPrepared(currentSong)
                     player.start()
+                    player.setVolume(1.0f, 1.0f)
                 }
                 player.setOnErrorListener { mp, what, extra ->
                     playbackCallback?.onComplete()
@@ -50,6 +51,11 @@ class Player private constructor() : IPlayer {
             return true
         }
         return false
+    }
+
+    override fun duck() {
+        if (isPlaying())
+            player.setVolume(0.1f, 0.1f)
     }
 
 

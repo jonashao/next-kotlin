@@ -6,7 +6,6 @@ import com.junnanhao.next.data.model.Song
  * Created by Jonas on 2017/5/26.
  * define interfaces of player
  */
-@Suppress("UNUSED")
 interface IPlayer {
     fun play(): Boolean
     fun play(song: Song): Boolean
@@ -17,4 +16,5 @@ interface IPlayer {
     fun getPlayingSong(): Song?
     fun seekTo(position: Int): Boolean
     fun release()
+    fun duck()
 }
