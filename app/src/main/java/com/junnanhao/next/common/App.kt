@@ -1,7 +1,6 @@
 package com.junnanhao.next.common
 
 import android.app.Application
-import com.junnanhao.next.BuildConfig
 import com.junnanhao.next.data.DaggerSongsRepositoryComponent
 import com.junnanhao.next.data.SongsRepositoryComponent
 import com.junnanhao.next.common.di.ApplicationModule

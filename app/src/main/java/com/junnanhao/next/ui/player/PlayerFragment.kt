@@ -43,6 +43,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         fun instance(): PlayerFragment {
             return PlayerFragment()
         }
+
         private val SWIPE_MIN_DISTANCE = 120
         private val SWIPE_MAX_OFF_PATH = 250
         private val SWIPE_THRESHOLD_VELOCITY = 200
@@ -115,8 +116,9 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         return mDetector.onTouchEvent(m)
     }
 
-    override fun showError() {
-        Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
+    override fun showError(error: String) {
+        title.text = error
+        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
     }
 
     private var DarkVibrantColor: Int = 0

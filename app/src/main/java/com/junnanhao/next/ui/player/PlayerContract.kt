@@ -11,7 +11,7 @@ import com.junnanhao.next.data.model.Song
 @Suppress("UNUSED")
 interface PlayerContract {
     interface View : BaseView<Presenter> {
-        fun showError()
+        fun showError(error:String)
         fun showSongInfo(song: Song?)
         fun showPermissionNotGranted()
         fun showLoading()

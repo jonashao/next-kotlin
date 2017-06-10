@@ -35,6 +35,10 @@ class Player private constructor() : IPlayer {
                     playbackCallback?.onPrepared(currentSong)
                     player.start()
                 }
+                player.setOnErrorListener { mp, what, extra ->
+                    playbackCallback?.onComplete()
+                    false
+                }
                 player.prepareAsync()
                 player.setOnCompletionListener({ playbackCallback?.onComplete() })
                 // todo: notify playing status changed

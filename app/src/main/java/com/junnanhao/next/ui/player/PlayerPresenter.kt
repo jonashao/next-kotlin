@@ -6,6 +6,7 @@ import com.junnanhao.next.player.PlaybackCallback
 import com.junnanhao.next.player.Player
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.realm.Realm
+import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
 
@@ -21,9 +22,11 @@ class PlayerPresenter @Inject constructor(
 
     val player: Player = Player.instance
     val realm: Realm = Realm.getDefaultInstance()
+    var scanned: Boolean = false
 
     init {
         player.playbackCallback = object : PlaybackCallback {
+
             override fun onPrepared(song: Song?) {
                 mView.showSongInfo(song)
             }
@@ -37,7 +40,10 @@ class PlayerPresenter @Inject constructor(
     override fun scan() {
         mSongsRepository.scanMusic()
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ next() })
+                .subscribe({ next() },
+                        { throwable: Throwable? -> Timber.wtf(throwable) },
+                        { scanned = true })
+
     }
 
     @Inject
@@ -65,8 +71,10 @@ class PlayerPresenter @Inject constructor(
             val random = Random()
             val song = list.get(random.nextInt(list.size))
             player.play(song)
-        } else {
+        } else if (!scanned) {
             scan()
+        } else {
+            mView.showError("没有歌曲")
         }
     }
 
