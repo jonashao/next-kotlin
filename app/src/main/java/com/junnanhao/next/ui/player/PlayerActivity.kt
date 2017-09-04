@@ -9,6 +9,7 @@ import butterknife.OnLongClick
 import com.junnanhao.next.R
 import com.junnanhao.next.common.App
 import com.junnanhao.next.ui.player.PlayerFragment
+import kotlinx.android.synthetic.main.activity_fullscreen.*
 import javax.inject.Inject
 
 /**
@@ -73,7 +74,9 @@ class PlayerActivity : AppCompatActivity() {
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
-        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener)
+//        dummy_button.setOnTouchListener(mDelayHideTouchListener)
+
+
 
         DaggerPlayerComponent.builder()
                 .songsRepositoryComponent((application as App).songsRepositoryComponent)

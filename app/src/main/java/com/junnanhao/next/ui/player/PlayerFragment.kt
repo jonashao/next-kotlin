@@ -11,10 +11,6 @@ import android.support.v4.app.Fragment
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import butterknife.BindView
-import butterknife.ButterKnife
-import butterknife.OnClick
-import butterknife.OnTouch
 import com.junnanhao.next.R
 import com.junnanhao.next.data.model.Song
 import android.support.v4.view.GestureDetectorCompat
@@ -25,6 +21,7 @@ import android.media.AudioManager
 import android.support.v4.content.ContextCompat
 import android.support.v7.graphics.Palette
 import android.view.*
+import butterknife.*
 import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.frag_player.*
 import java.io.File
@@ -90,7 +87,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
 
         mBecomingNoisyReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
+                if (intent?.action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
                     Timber.wtf("become noisy")
                     mPresenter.pause()
                 }
@@ -98,7 +95,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         }
         mHeadphonePluggedReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.getAction().equals(Intent.ACTION_HEADSET_PLUG)) {
+                if (intent?.action.equals(Intent.ACTION_HEADSET_PLUG)) {
                     if (intent?.getIntExtra("state", -1) == 1) {
                         Timber.wtf("Headset is plugged")
                         mPresenter.start()
@@ -165,6 +162,12 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         mPresenter.playPause()
     }
 
+    @OnLongClick(R.id.container)
+    fun refresh():Boolean{
+        mPresenter.scan()
+        return true
+    }
+
     @OnTouch()
     fun onTouch(m: MotionEvent): Boolean {
         return mDetector.onTouchEvent(m)
@@ -216,8 +219,8 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     }
 
     override fun showPermissionNotGranted() {
-        title.setText(getString(R.string.require_permission))
-        artist.setText(getString(R.string.permission_reason))
+        title.text = getString(R.string.require_permission)
+        artist.text = getString(R.string.permission_reason)
         art.setImageResource(R.drawable.ic_permission)
         art.scaleType = ImageView.ScaleType.CENTER
         container.setOnClickListener {
@@ -241,8 +244,8 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     }
 
     override fun showLoading() {
-        title.setText(getString(R.string.loading))
-        artist.setText("")
+        title.text = getString(R.string.loading)
+        artist.text = ""
     }
 
 

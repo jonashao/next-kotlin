@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 
 import java.util.concurrent.TimeUnit;

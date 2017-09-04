@@ -51,15 +51,15 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
         return Observable.just(cursor)
                 .subscribeOn(Schedulers.io())
                 .map {
-                    cursor: Cursor? ->
+                    c: Cursor? ->
                     val songs: MutableList<Song> = ArrayList()
-                    if (cursor != null && cursor.count > 0) {
-                        cursor.moveToFirst()
+                    if (c != null && c.count > 0) {
+                        c.moveToFirst()
                         do {
-                            val song = Song.fromCursor(cursor)
+                            val song = Song.fromCursor(c)
                             if (song != null && song.isSongValid())
                                 songs.add(song)
-                        } while (cursor.moveToNext())
+                        } while (c.moveToNext())
                     }
                     songs
                 }
