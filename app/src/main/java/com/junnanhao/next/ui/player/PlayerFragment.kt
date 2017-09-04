@@ -18,6 +18,7 @@ import timber.log.Timber
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
+import android.support.annotation.StringRes
 import android.support.v4.content.ContextCompat
 import android.support.v7.graphics.Palette
 import android.view.*
@@ -98,7 +99,7 @@ class PlayerFragment : Fragment(), PlayerContract.View {
                 if (intent?.action.equals(Intent.ACTION_HEADSET_PLUG)) {
                     if (intent?.getIntExtra("state", -1) == 1) {
                         Timber.wtf("Headset is plugged")
-                        mPresenter.start()
+                        mPresenter.play()
                     }
                 }
             }
@@ -129,6 +130,10 @@ class PlayerFragment : Fragment(), PlayerContract.View {
                     }
                 }
                 return true
+            }
+
+            override fun onLongPress(e: MotionEvent?) {
+                mPresenter.scan()
             }
         })
         activity.registerReceiver(mBecomingNoisyReceiver,
@@ -162,11 +167,6 @@ class PlayerFragment : Fragment(), PlayerContract.View {
         mPresenter.playPause()
     }
 
-    @OnLongClick(R.id.container)
-    fun refresh():Boolean{
-        mPresenter.scan()
-        return true
-    }
 
     @OnTouch()
     fun onTouch(m: MotionEvent): Boolean {
@@ -176,6 +176,14 @@ class PlayerFragment : Fragment(), PlayerContract.View {
     override fun showError(error: String) {
         title.text = error
         Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun showMessage(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun showMessage(@StringRes resId: Int) {
+        showMessage(context.getString(resId))
     }
 
     private var DarkVibrantColor: Int = 0

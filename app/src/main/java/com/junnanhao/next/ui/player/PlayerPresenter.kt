@@ -1,4 +1,6 @@
 package com.junnanhao.next.ui.player
+
+import com.junnanhao.next.R
 import com.junnanhao.next.data.SongsRepository
 import com.junnanhao.next.data.model.Song
 import com.junnanhao.next.player.PlaybackCallback
@@ -42,8 +44,12 @@ class PlayerPresenter @Inject constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ next() },
                         { throwable: Throwable? -> Timber.wtf(throwable) },
-                        { scanned = true })
+                        {
+                            scanned = true
+                            mView.showMessage(R.string.scan_over)
+                        })
     }
+
 
     @Inject
     fun setupListener() {
@@ -72,7 +78,7 @@ class PlayerPresenter @Inject constructor(
         val list = realm.where(Song::class.java).findAll()
         if (list.size > 0) {
             val random = Random()
-            val song = list.get(random.nextInt(list.size))
+            val song = list[random.nextInt(list.size)]
             player.play(song)
         } else if (!scanned) {
             scan()

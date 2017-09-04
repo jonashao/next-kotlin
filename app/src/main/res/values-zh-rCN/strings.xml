@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Next</string>
+    <string name="dummy_button">按钮</string>
+    <string name="song_title">歌曲名</string>
+    <string name="artist">艺术家</string>
+    <string name="album_art">封面</string>
+    <string name="loading">加载中…</string>
+    <string name="require_permission">请授予权限</string>
+    <string name="permission_reason">来扫描本地歌曲</string>
+    <string name="warning_cannot_get_audio_focus">无法控制音量</string>
+    <string name="scan_over">扫描完毕！</string>
+</resources>

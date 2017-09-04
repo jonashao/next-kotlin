@@ -14,6 +14,8 @@ interface PlayerContract {
         fun showSongInfo(song: Song?)
         fun showPermissionNotGranted()
         fun showLoading()
+        fun showMessage(message: String)
+        fun showMessage(resId: Int)
     }
 
     interface Presenter : BasePresenter {
