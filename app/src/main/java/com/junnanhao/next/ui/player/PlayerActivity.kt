@@ -1,5 +1,6 @@
 package com.junnanhao.next.ui.player
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -8,10 +9,9 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import android.view.View
-import butterknife.ButterKnife
-import butterknife.OnLongClick
 import com.junnanhao.next.R
 import com.junnanhao.next.common.App
+import kotlinx.android.synthetic.main.activity_fullscreen.*
 import javax.inject.Inject
 
 /**
@@ -20,17 +20,17 @@ import javax.inject.Inject
  */
 class PlayerActivity : AppCompatActivity() {
     private val mHideHandler = Handler()
-    private var mContentView: View? = null
     private var mediaSession: MediaSessionCompat? = null
     private val playbackStateBuilder = PlaybackStateCompat.Builder()
 
+    @SuppressLint("InlinedApi")
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
 
         // Note that some of these constants are new as of API 16 (Jelly Bean)
         // and API 19 (KitKat). It is safe to use them, as they are inlined
         // at compile-time and do nothing on earlier devices.
-        mContentView!!.systemUiVisibility =
+        fullscreen_content?.systemUiVisibility =
                 View.SYSTEM_UI_FLAG_LOW_PROFILE or
                         View.SYSTEM_UI_FLAG_FULLSCREEN or
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
@@ -38,49 +38,22 @@ class PlayerActivity : AppCompatActivity() {
                         View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
                         View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
     }
-    private var mControlsView: View? = null
-    private val mShowPart2Runnable = Runnable {
-        // Delayed display of UI elements
-        supportActionBar?.show()
-        mControlsView!!.visibility = View.VISIBLE
-    }
-    private var mVisible: Boolean = false
+
     private val mHideRunnable = Runnable { hide() }
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private val mDelayHideTouchListener = View.OnTouchListener { _, _ ->
-        if (AUTO_HIDE) {
-            delayedHide(AUTO_HIDE_DELAY_MILLIS)
-        }
-        false
-    }
+
     @Inject lateinit var mPresenter: PlayerPresenter
         set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fullscreen)
-        ButterKnife.bind(this)
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        mVisible = true
+
         val playerFragment = PlayerFragment.instance()
         supportFragmentManager.beginTransaction()
                 .add(R.id.fullscreen_content, playerFragment, "player-fragment")
                 .commit()
-        mControlsView = findViewById(R.id.fullscreen_content_controls)
-        mContentView = findViewById(R.id.fullscreen_content)
-
-        // Set up the user interaction to manually show or hide the system UI.
-//        mContentView!!.setOnClickListener { toggle() }
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-//        dummy_button.setOnTouchListener(mDelayHideTouchListener)
-
 
         mediaSession = MediaSessionCompat(this, "NEXT")
         mediaSession?.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS)
@@ -96,7 +69,7 @@ class PlayerActivity : AppCompatActivity() {
 
     }
 
-    private var mediaCallback: MediaSessionCompat.Callback = object :
+    private val mediaCallback: MediaSessionCompat.Callback = object :
             MediaSessionCompat.Callback() {
 
         override fun onPlay() {
@@ -140,10 +113,6 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        hide()
-    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -159,38 +128,13 @@ class PlayerActivity : AppCompatActivity() {
         delayedHide(100)
     }
 
-    @OnLongClick(R.id.fullscreen_content)
-    fun toggle(): Boolean {
-        if (mVisible) {
-            hide()
-        } else {
-            show()
-        }
-        return true
-    }
 
     private fun hide() {
         // Hide UI first
         supportActionBar?.hide()
-        mControlsView!!.visibility = View.GONE
-        mVisible = false
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable)
         mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY.toLong())
     }
 
-    private fun show() {
-        // Show the system bar
-        mContentView!!.systemUiVisibility =
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        mVisible = true
-
-        // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable)
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY.toLong())
-    }
 
     /**
      * Schedules a call to hide() in [delayMillis], canceling any
@@ -202,18 +146,6 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     companion object {
-        /**
-         * Whether or not the system UI should be auto-hidden after
-         * [AUTO_HIDE_DELAY_MILLIS] milliseconds.
-         */
-        private val AUTO_HIDE = true
-
-        /**
-         * If [AUTO_HIDE] is set, the number of milliseconds to wait after
-         * user interaction before hiding the system UI.
-         */
-        private val AUTO_HIDE_DELAY_MILLIS = 3000
-
         /**
          * Some older devices needs a small delay between UI widget updates
          * and a change of the status and navigation bar.

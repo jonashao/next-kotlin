@@ -9,7 +9,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -53,13 +52,11 @@ public class SensorService extends Service implements SensorEventListener {
         count = 0;
     }
 
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
-
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {

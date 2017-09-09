@@ -36,7 +36,7 @@ class Player private constructor() : IPlayer {
                     player.start()
                     player.setVolume(1.0f, 1.0f)
                 }
-                player.setOnErrorListener { mp, what, extra ->
+                player.setOnErrorListener { _, _, _ ->
                     playbackCallback?.onComplete()
                     false
                 }
