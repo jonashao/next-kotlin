@@ -1,15 +1,17 @@
 package com.junnanhao.next.ui.player
 
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
+import android.view.KeyEvent
 import android.view.View
 import butterknife.ButterKnife
 import butterknife.OnLongClick
 import com.junnanhao.next.R
 import com.junnanhao.next.common.App
-import com.junnanhao.next.ui.player.PlayerFragment
-import kotlinx.android.synthetic.main.activity_fullscreen.*
 import javax.inject.Inject
 
 /**
@@ -19,6 +21,9 @@ import javax.inject.Inject
 class PlayerActivity : AppCompatActivity() {
     private val mHideHandler = Handler()
     private var mContentView: View? = null
+    private var mediaSession: MediaSessionCompat? = null
+    private val playbackStateBuilder = PlaybackStateCompat.Builder()
+
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
 
@@ -77,6 +82,11 @@ class PlayerActivity : AppCompatActivity() {
 //        dummy_button.setOnTouchListener(mDelayHideTouchListener)
 
 
+        mediaSession = MediaSessionCompat(this, "NEXT")
+        mediaSession?.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS)
+        mediaSession?.setPlaybackState(playbackStateBuilder.build())
+        mediaSession?.setCallback(mediaCallback)
+        mediaSession?.isActive = true
 
         DaggerPlayerComponent.builder()
                 .songsRepositoryComponent((application as App).songsRepositoryComponent)
@@ -86,9 +96,58 @@ class PlayerActivity : AppCompatActivity() {
 
     }
 
+    private var mediaCallback: MediaSessionCompat.Callback = object :
+            MediaSessionCompat.Callback() {
+
+        override fun onPlay() {
+            super.onPlay()
+            mPresenter.play()
+        }
+
+        override fun onPause() {
+            super.onPause()
+            mPresenter.pause()
+        }
+
+        override fun onSkipToNext() {
+            super.onSkipToNext()
+            mPresenter.next()
+        }
+
+        override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
+            val keyEvent = mediaButtonEvent?.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+            if (keyEvent == null || keyEvent.action != KeyEvent.ACTION_DOWN) {
+                return false
+            }
+            val keyCode = keyEvent.keyCode
+            when (keyCode) {
+                KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                    onPause()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                    onPlay()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_NEXT -> {
+                    onSkipToNext()
+                    return true
+                }
+                else -> {
+                    return super.onMediaButtonEvent(mediaButtonEvent)
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         hide()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaSession?.release()
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
