@@ -10,7 +10,11 @@ import io.reactivex.Observable
  */
 interface SongsDataSource {
 
-    fun scanMusic(): Observable<MutableList<Song>>
+    fun isInitialized(): Boolean
+
+    fun scanMusic(): Observable<List<Song>>
+
+    fun getSongs():List<Song>
 
     fun getSong(@NonNull songId: Long): Observable<Song>
 

@@ -5,8 +5,8 @@ import android.media.MediaMetadataRetriever
 import android.provider.MediaStore
 import android.text.TextUtils
 import com.github.ajalt.timberkt.Timber
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import io.objectbox.annotation.Entity
+import io.objectbox.annotation.Id
 //import timber.log.Timber
 import java.io.File
 
@@ -14,8 +14,10 @@ import java.io.File
  * Created by Jonas on 2017/5/26.
  * song
  */
-open class Song(
-        @PrimaryKey var id: Long = 0,
+@Entity
+data class Song(
+        @Id var id: Long = 0,
+        var resId: Long = 0,
         var path: String = "",
         var duration: Int = 0,
         var title: String = "",
@@ -23,25 +25,12 @@ open class Song(
         var displayName: String = "",
         var size: Int = 0,
         var album: String = "",
-        var albumId: Long = 0) : RealmObject() {
+        var albumId: Long = 0) {
 
     var art: String? = null
 
-
-
     fun isSongValid(): Boolean {
         return duration > MIN_DURATION && artist != UNKNOWN
-    }
-
-    fun autoId(): Song {
-        if (id == 0L) {
-            var result: Long = duration.toLong()
-            result = 63 * result + title.hashCode()
-            result = 63 * result + artist.hashCode()
-            result = 63 * result + album.hashCode()
-            id = result
-        }
-        return this
     }
 
     override fun equals(other: Any?): Boolean {
@@ -59,7 +48,7 @@ open class Song(
     }
 
     override fun hashCode(): Int {
-        var result = duration
+        var result = duration.toInt()
         result = 31 * result + title.hashCode()
         result = 31 * result + artist.hashCode()
         result = 31 * result + album.hashCode()
@@ -69,7 +58,6 @@ open class Song(
     override fun toString(): String {
         return "Song(id=$id, path='$path', title='$title', artist='$artist', album='$album', albumId=$albumId, art=$art)"
     }
-
 
     companion object {
         val MIN_DURATION: Int = 40000
@@ -85,7 +73,8 @@ open class Song(
                     song = fromFile(songFile)
                     if (song != null) {
                         song.albumId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID))
-                        song.id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+                        song.resId = cursor.getLong(cursor.getColumnIndexOrThrow
+                        (MediaStore.Audio.Media._ID))
                         return song
                     }
                 }
@@ -99,7 +88,8 @@ open class Song(
                         album = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
                         albumId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)),
                         path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                        duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
+                        duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media
+                                .DURATION)),
                         size = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
                         id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)))
             } catch (e: IllegalArgumentException) {
@@ -108,26 +98,24 @@ open class Song(
             return song
         }
 
-        fun fromFile(file: File): Song? {
+        private fun fromFile(file: File): Song? {
             if (file.length() == 0L) return null
             val metadataRetriever = MediaMetadataRetriever()
             metadataRetriever.setDataSource(file.absolutePath)
 
-            val duration: Int
             val keyDuration = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
             // ensure the duration is a digit, otherwise return null song
             if (keyDuration == null || !keyDuration.matches("\\d+".toRegex())) return null
-            duration = Integer.parseInt(keyDuration)
+            val duration = Integer.parseInt(keyDuration)
 
             val title = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_TITLE, file.name)
             val displayName = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_TITLE, file.name)
             val artist = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_ARTIST, UNKNOWN)
             val album = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_ALBUM, UNKNOWN)
 
-            val song = Song(title = title, displayName = displayName, artist = artist,
+            return Song(title = title, displayName = displayName, artist = artist,
                     path = file.absolutePath, album = album, duration = duration,
-                    size = file.length().toInt()).autoId()
-            return song
+                    size = file.length().toInt())
         }
 
         private fun extractMetadata(retriever: MediaMetadataRetriever, key: Int, defaultValue: String): String {

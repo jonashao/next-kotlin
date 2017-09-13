@@ -1,0 +1,69 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:5389925251510223458",
+      "lastPropertyId": "11:4030002630012904670",
+      "name": "Song",
+      "properties": [
+        {
+          "id": "1:2839093161611551609",
+          "name": "art"
+        },
+        {
+          "id": "2:2511316058025787325",
+          "name": "id"
+        },
+        {
+          "id": "3:1191401528932542652",
+          "name": "path"
+        },
+        {
+          "id": "4:3710496767483068548",
+          "name": "duration"
+        },
+        {
+          "id": "5:1498891417242952266",
+          "name": "title"
+        },
+        {
+          "id": "6:3687325401401801058",
+          "name": "artist"
+        },
+        {
+          "id": "7:2396070755442260414",
+          "name": "displayName"
+        },
+        {
+          "id": "8:7097356419791670440",
+          "name": "size"
+        },
+        {
+          "id": "9:6905446160146402448",
+          "name": "album"
+        },
+        {
+          "id": "10:1447097983269978320",
+          "name": "albumId"
+        },
+        {
+          "id": "11:4030002630012904670",
+          "name": "resId"
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "1:5389925251510223458",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 3,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

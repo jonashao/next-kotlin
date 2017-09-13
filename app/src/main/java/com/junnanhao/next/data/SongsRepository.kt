@@ -1,24 +1,30 @@
 package com.junnanhao.next.data
 
 import android.Manifest
-import android.content.Context
+import android.app.Application
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.provider.MediaStore
 import android.support.v4.content.ContentResolverCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.os.CancellationSignal
+import com.junnanhao.next.App
 import com.junnanhao.next.data.model.Song
+import io.objectbox.Box
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
-import io.realm.Realm
-import javax.inject.Inject
 
 /**
  * Created by Jonas on 2017/5/29.
  * songs repository
  */
-class SongsRepository @Inject constructor(var context: Context) : SongsDataSource {
+class SongsRepository constructor(private var context: Application) : SongsDataSource {
+
+    private val songBox: Box<Song> = (context as App).boxStore.boxFor(Song::class.java)
+
+    override fun isInitialized(): Boolean {
+        return songBox.count() > 0
+    }
 
     companion object {
         private val MEDIA_URI = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -32,7 +38,7 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
 
     private var cancellationSignal: CancellationSignal? = null
 
-    override fun scanMusic(): Observable<MutableList<Song>> {
+    override fun scanMusic(): Observable<List<Song>> {
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -50,8 +56,7 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
 
         return Observable.just(cursor)
                 .subscribeOn(Schedulers.io())
-                .map {
-                    c: Cursor? ->
+                .map { c: Cursor? ->
                     val songs: MutableList<Song> = ArrayList()
                     if (c != null && c.count > 0) {
                         c.moveToFirst()
@@ -61,10 +66,9 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
                                 songs.add(song)
                         } while (c.moveToNext())
                     }
-                    songs
+                    songs.toList()
                 }
-                .doOnNext {
-                    songs: MutableList<Song>? ->
+                .doOnNext{songs: List<Song>? ->
                     songs?.forEach { song: Song? ->
                         val cursor1: Cursor = ContentResolverCompat.query(
                                 context.contentResolver,
@@ -76,13 +80,13 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
                             if (cursor1.moveToFirst()) {
                                 song?.art = cursor1.getString(cursor1.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART))
                             }
-                            System.out.println(song?.art)
                         }
                         cursor1.close()
                     }
-                    val realm: Realm = Realm.getDefaultInstance()
-                    realm.executeTransaction({ realm -> realm.copyToRealmOrUpdate(songs) })
+
+                    songBox.put(songs)
                 }
+
                 .doOnComplete { cursor.close() }
                 .doOnError { t: Throwable? ->
                     cursor.close()
@@ -90,6 +94,10 @@ class SongsRepository @Inject constructor(var context: Context) : SongsDataSourc
                 }
 
 
+    }
+
+    override fun getSongs(): List<Song> {
+        return songBox.all
     }
 
 
