@@ -163,7 +163,6 @@ class PlayerFragment : Fragment() {
             wtf { "meta data changed: title = ${metadata?.description?.title}" }
             tv_song_title.text = metadata?.description?.title
             tv_song_artist.text = metadata?.description?.subtitle
-
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {

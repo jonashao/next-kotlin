@@ -47,6 +47,7 @@ class QueueManager(private val mMusicProvider: MusicProvider, val mListener: Met
         // set the current index on queue from the music Id:
         val index = mPlayingQueue.indexOf(mediaId)
         setCurrentQueueIndex(index)
+        updateMetadata()
         return index >= 0
     }
 
@@ -72,7 +73,7 @@ class QueueManager(private val mMusicProvider: MusicProvider, val mListener: Met
     }
 
     val currentMusic: QueueItem?
-        get() = mPlayingQueue[mCurrentIndex]
+        get() = mPlayingQueue.getOrNull(mCurrentIndex)
 
     val currentQueueSize: Int
         get() = mPlayingQueue.size
@@ -84,6 +85,8 @@ class QueueManager(private val mMusicProvider: MusicProvider, val mListener: Met
             mPlayingQueue.indexOf(initialMediaId) else 0
 
         mCurrentIndex = Math.max(index, 0)
+        updateMetadata()
+
 //        mListener.onQueueUpdated(title, newQueue)
     }
 

@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.RemoteException
 import android.support.annotation.RequiresApi
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaBrowserServiceCompat
@@ -11,6 +12,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.data.MusicProvider
 import com.junnanhao.next.data.ObjectBoxMusicSource
 import com.junnanhao.next.data.SongsRepository
@@ -18,8 +20,6 @@ import com.junnanhao.next.playback.LocalPlayback
 import com.junnanhao.next.playback.Playback
 import com.junnanhao.next.playback.PlaybackManager
 import com.junnanhao.next.playback.QueueManager
-import com.junnanhao.next.utils.MediaIDHelper
-import java.util.*
 
 
 /**
@@ -36,11 +36,11 @@ class MusicService : MediaBrowserServiceCompat(),
     private lateinit var queueManager: QueueManager
     private lateinit var playbackManager: PlaybackManager
     private lateinit var playback: Playback
+    private var mMediaNotificationManager: MediaNotificationManager? = null
 
 
     override fun onCreate() {
         super.onCreate()
-
         musicProvider = MusicProvider(ObjectBoxMusicSource(application))
         musicProvider.retrieveMusic()
 
@@ -64,7 +64,6 @@ class MusicService : MediaBrowserServiceCompat(),
 //                mSession.setQueueTitle(title)
             }
         })
-        queueManager.setQueueFromState(Calendar.getInstance(), null)
 
         playback = LocalPlayback(applicationContext, musicProvider)
         playbackManager = PlaybackManager(this, resources,
@@ -89,6 +88,12 @@ class MusicService : MediaBrowserServiceCompat(),
 
         // MySessionCallback() has methods that handle callbacks from a media controller
         mMediaSession!!.setCallback(playbackManager.mediaSessionCallback)
+
+        try {
+            mMediaNotificationManager = MediaNotificationManager(this)
+        } catch (e: RemoteException) {
+            throw IllegalStateException("Could not create a MediaNotificationManager", e)
+        }
 
     }
 
@@ -133,15 +138,15 @@ class MusicService : MediaBrowserServiceCompat(),
                 result.sendResult(emptyList())
             }
             MY_MEDIA_ROOT_ID -> {
-                val mediaId = queueManager.currentMusic?.description?.mediaId
-                val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
-                val mediaDesc = musicProvider.getMusic(musicId)?.description
-                if (mediaDesc != null) {
-                    val mediaItem = MediaItem(mediaDesc, MediaItem.FLAG_PLAYABLE)
-                    result.sendResult(listOf(mediaItem))
-                } else {
+//                val mediaId = queueManager.currentMusic?.description?.mediaId
+//                val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
+//                val mediaDesc = musicProvider.getMusic(musicId)?.description
+//                if (mediaDesc != null) {
+//                    val mediaItem = MediaItem(mediaDesc, MediaItem.FLAG_PLAYABLE)
+//                    result.sendResult(listOf(mediaItem))
+//                } else {
                     result.sendResult(emptyList())
-                }
+//                }
             }
             else -> {
                 result.sendResult(emptyList())
@@ -183,8 +188,17 @@ class MusicService : MediaBrowserServiceCompat(),
         startService(Intent(applicationContext, MusicService::class.java))
     }
 
-    override fun onNotificationRequired() {
+    override fun onDestroy() {
+        super.onDestroy()
+        wtf { "onDestroy" }
+        // Service is being killed, so make sure we release our resources
+        playbackManager.handleStopRequest(null)
+        mMediaSession?.release()
+        mMediaNotificationManager?.stopNotification()
+    }
 
+    override fun onNotificationRequired() {
+        mMediaNotificationManager?.startNotification()
     }
 
     override fun onSource() {
@@ -222,5 +236,13 @@ class MusicService : MediaBrowserServiceCompat(),
         // A value of a CMD_NAME key that indicates that the music playback should switch
         // to local playback from cast playback.
         val CMD_STOP_CASTING = "CMD_STOP_CASTING"
+
+
+        // Extra on MediaSession that contains the Cast device name currently connected to
+        val EXTRA_CONNECTED_CAST = "com.example.android.uamp.CAST_NAME"
+
+        // Delay stopSelf by using a handler.
+        private val STOP_DELAY = 30000
+
     }
 }

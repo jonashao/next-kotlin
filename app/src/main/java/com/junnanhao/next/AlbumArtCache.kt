@@ -65,7 +65,7 @@ class AlbumArtCache private constructor() {
             listener.onFetched(artUrl, bitmap[BIG_BITMAP_INDEX], bitmap[ICON_BITMAP_INDEX])
             return
         }
-        wtf { "getOrFetch: starting asynctask to fetch $artUrl" }
+        wtf { "getOrFetch: starting async task to fetch $artUrl" }
 
         Single.just(artUrl)
                 .subscribeOn(Schedulers.io())
@@ -115,6 +115,6 @@ class AlbumArtCache private constructor() {
         private val BIG_BITMAP_INDEX = 0
         private val ICON_BITMAP_INDEX = 1
 
-        val instance = AlbumArtCache()
+        public val instance = AlbumArtCache()
     }
 }

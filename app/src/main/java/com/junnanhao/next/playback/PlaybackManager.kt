@@ -10,6 +10,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.data.MusicProvider
+import java.util.*
 
 
 /**
@@ -78,11 +79,8 @@ class PlaybackManager(
      */
     fun updatePlaybackState(error: String?) {
         wtf { "updatePlaybackState, playback state= ${playback?.state}" }
-        var position = PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN
-//        if (playback != null && playback!!.isConnected) {
-//            position = playback!!.currentStreamPosition
-//        }
-
+        val position = playback?.currentStreamPosition ?:
+                PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN
 
         val stateBuilder = PlaybackStateCompat.Builder()
                 .setActions(availableActions)
@@ -94,7 +92,7 @@ class PlaybackManager(
         if (error != null) {
             // Error states are really only supposed to be used for errors that cause playback to
             // stop unexpectedly and persist until the user takes action to fix it.
-            stateBuilder.setErrorMessage(error)
+            stateBuilder.setErrorMessage(1, error)
             state = PlaybackStateCompat.STATE_ERROR
         }
 
@@ -216,10 +214,11 @@ class PlaybackManager(
 
     private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         override fun onPlay() {
-//            LogHelper.d(TAG, "play")
-//            if (mQueueManager.currentMusic == null) {
-//                mQueueManager.setRandomQueue()
-//            }
+            wtf { "play" }
+            if (mQueueManager.currentMusic == null) {
+                mQueueManager.setQueueFromState(Calendar.getInstance(), null)
+            }
+
             handlePlayRequest()
         }
 
@@ -294,8 +293,8 @@ class PlaybackManager(
         }
 
         override fun onCustomAction(action: String, extras: Bundle?) {
-            if (action ==  ACTION_SCAN) {
-               mServiceCallback.onSource()
+            if (action == ACTION_SCAN) {
+                mServiceCallback.onSource()
             }
 //            if (CUSTOM_ACTION_THUMBS_UP == action) {
 //                LogHelper.i(TAG, "onCustomAction: favorite for current track")
@@ -347,7 +346,7 @@ class PlaybackManager(
 
 
     interface PlaybackServiceCallback {
-       fun  onSource()
+        fun onSource()
 
         fun onPlaybackStart()
 

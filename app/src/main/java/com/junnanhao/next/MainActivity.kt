@@ -73,6 +73,16 @@ class MainActivity : AppCompatActivity() {
          * and a change of the status and navigation bar.
          */
         private val UI_ANIMATION_DELAY = 300
+        private val SAVED_MEDIA_ID = "com.example.android.uamp.MEDIA_ID"
+        private val FRAGMENT_TAG = "uamp_list_container"
+
+        val EXTRA_START_FULLSCREEN = "com.example.android.uamp.EXTRA_START_FULLSCREEN"
+        /**
+         * Optionally used with [.EXTRA_START_FULLSCREEN] to carry a MediaDescription to
+         * the [FullScreenPlayerActivity], speeding up the screen rendering
+         * while the [android.support.v4.media.session.MediaControllerCompat] is connecting.
+         */
+        val EXTRA_CURRENT_MEDIA_DESCRIPTION = "com.example.android.uamp.CURRENT_MEDIA_DESCRIPTION"
     }
 
 }
