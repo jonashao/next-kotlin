@@ -109,9 +109,6 @@ class PlayerFragment : Fragment() {
                 parentId: String,
                 children: MutableList<MediaItem>) {
             super.onChildrenLoaded(parentId, children)
-            val song = children.getOrNull(0)?.description
-            tv_song_title?.text = song?.title
-            tv_song_artist?.text = song?.subtitle
 
             val mediaController: MediaControllerCompat = MediaControllerCompat
                     .getMediaController(activity)
@@ -161,8 +158,10 @@ class PlayerFragment : Fragment() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
             wtf { "meta data changed: title = ${metadata?.description?.title}" }
-            tv_song_title.text = metadata?.description?.title
-            tv_song_artist.text = metadata?.description?.subtitle
+            if (metadata != null) {
+                tv_song_title.text = metadata.description?.title
+                tv_song_artist.text = metadata.description?.subtitle
+            }
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
