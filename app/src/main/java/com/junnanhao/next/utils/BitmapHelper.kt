@@ -19,7 +19,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.github.ajalt.timberkt.wtf
 import java.io.*
-
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -85,6 +84,5 @@ object BitmapHelper {
             input?.close()
         }
     }
-
 
 }

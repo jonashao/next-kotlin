@@ -3,11 +3,13 @@ package com.junnanhao.next
 import android.Manifest
 import android.content.ComponentName
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Point
-import android.graphics.Rect
+import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
+import android.support.v4.graphics.drawable.DrawableCompat
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaBrowserCompat.SubscriptionCallback
@@ -15,8 +17,10 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.view.GestureDetectorCompat
+import android.support.v7.graphics.Palette
 import android.text.TextUtils
 import android.view.*
+import android.widget.ImageView
 import com.github.ajalt.timberkt.wtf
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -57,41 +61,87 @@ class PlayerFragment : Fragment() {
     private val controllerCallback: MediaControllerCompat.Callback
             = object : MediaControllerCompat.Callback() {
 
+
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
             wtf { "meta data changed: title = ${metadata?.description?.title}" }
             if (metadata != null) {
-                tv_song_title.text = metadata.description?.title
-                tv_song_artist.text = metadata.description?.subtitle
+                tv_song_title?.text = metadata.description?.title
+                tv_song_artist?.text = metadata.description?.subtitle
 
-                val artUrl: String = metadata.description.iconUri?.toString() ?: return
-                if (TextUtils.equals(artUrl, mArtUrl)) return
-
-                mArtUrl = artUrl
-                val art = metadata.description.iconBitmap
-
-                if (art == null) {
-                    AlbumArtCache.instance.getBigImage(artUrl)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe { bitmap: Bitmap?, error: Throwable? ->
-                                if (bitmap != null) {
-                                    img_art.setImageBitmap(bitmap)
-                                }
-                                if (error != null) {
-                                    wtf { "get art failed: $error" }
-                                }
-                            }
-                } else {
-                    img_art.setImageBitmap(art)
+                val iconUri = metadata.description.iconUri
+                if (iconUri == null) {
+                    val coverArt: Drawable = ContextCompat.getDrawable(context, R.drawable
+                            .ic_music)
+                    DrawableCompat.setTint(coverArt, Color.WHITE)
+                    setCoverArt(coverArt.toBitmap())
+                    return
                 }
 
+                val artUrl = iconUri.toString()
+                if (TextUtils.equals(artUrl, mArtUrl)) return
+                mArtUrl = artUrl
+                AlbumArtCache.instance.getBigImage(artUrl)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe { bitmap: Bitmap?, error: Throwable? ->
+                            val coverArt: Bitmap = bitmap ?:
+                                    BitmapFactory.decodeResource(resources, R.drawable.ic_music)
+                            setCoverArt(coverArt)
+                            if (error != null) {
+                                wtf { "get art failed: $error" }
+                            }
+                        }
             }
 
+
+        }
+
+        fun Drawable.toBitmap(): Bitmap {
+            if (this is BitmapDrawable) {
+                return bitmap
+            }
+
+            val width = if (intrinsicWidth > 0) intrinsicWidth else 1
+            val height = if (intrinsicHeight > 0) intrinsicHeight else 1
+
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            setBounds(0, 0, canvas.width, canvas.height)
+            draw(canvas)
+            return bitmap
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
         }
+
+        fun setCoverArt(bitmap: Bitmap) {
+            img_art.scaleType = ImageView.ScaleType.CENTER_CROP
+            img_art.setImageBitmap(bitmap)
+
+            val palette = Palette.from(bitmap).generate()
+            val darkMutedColor = palette.getDarkMutedColor(DEFAULT_BACKGROUND)
+            val lightVibrantColor = palette.getLightVibrantColor(DEFAULT_FOREGROUND)
+
+            container.setBackgroundColor(darkMutedColor)
+            tv_song_title.setTextColor(lightVibrantColor)
+            tv_song_artist.setTextColor(lightVibrantColor)
+        }
+
+//        fun Drawable.toBitmap(): Bitmap {
+//            if (this is BitmapDrawable) {
+//                return bitmap
+//            }
+//
+//            val width = if (intrinsicWidth > 0) intrinsicWidth else 1
+//            val height = if (intrinsicHeight > 0) intrinsicHeight else 1
+//
+//            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+//            val canvas = Canvas(bitmap)
+//            setBounds(0, 0, canvas.width, canvas.height)
+//            draw(canvas)
+//            return bitmap
+//        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -248,6 +298,9 @@ class PlayerFragment : Fragment() {
         fun instance(): PlayerFragment {
             return PlayerFragment()
         }
+
+        val DEFAULT_BACKGROUND = Color.BLACK
+        val DEFAULT_FOREGROUND = Color.WHITE
 
         private val SWIPE_MIN_DISTANCE = 120
         private val SWIPE_MAX_OFF_PATH = 250

@@ -17,7 +17,7 @@ import java.util.*
 object QueueHelper {
 
 
-    private val RANDOM_QUEUE_SIZE = 10
+    private val RANDOM_QUEUE_SIZE = 20
 
     fun getPlayingQueue(
             mediaId: String, musicProvider: MusicProvider): List<QueueItem>? {
