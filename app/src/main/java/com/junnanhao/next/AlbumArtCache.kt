@@ -22,7 +22,6 @@ import android.util.LruCache
 import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.utils.BitmapHelper
 import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
 /**
@@ -44,17 +43,18 @@ class AlbumArtCache private constructor() {
         }
     }
 
-    fun getBigImage(artUrl: String): Bitmap? {
-        val result = mCache.get(artUrl)
-        return if (result == null) null else result[BIG_BITMAP_INDEX]
+    fun getBigImage(artUrl: String): Single<Bitmap?> {
+        return fetch(artUrl)
+                .map { bitmaps -> bitmaps[BIG_BITMAP_INDEX] }
+
     }
 
-    fun getIconImage(artUrl: String): Bitmap? {
-        val result = mCache.get(artUrl)
-        return if (result == null) null else result[ICON_BITMAP_INDEX]
+    fun getIconImage(artUrl: String): Single<Bitmap?> {
+        return fetch(artUrl)
+                .map { bitmaps -> bitmaps[ICON_BITMAP_INDEX] }
     }
 
-    fun fetch(artUrl: String, listener: FetchListener) {
+    fun fetch(artUrl: String): Single<Array<Bitmap>> {
         // WARNING: for the sake of simplicity, simultaneous multi-thread fetch requests
         // are not handled properly: they may cause redundant costly operations, like HTTP
         // requests and bitmap rescales. For production-level apps, we recommend you use
@@ -62,33 +62,25 @@ class AlbumArtCache private constructor() {
         val bitmap = mCache.get(artUrl)
         if (bitmap != null) {
             wtf { "getOrFetch: album art is in cache, using it $artUrl" }
-            listener.onFetched(artUrl, bitmap[BIG_BITMAP_INDEX], bitmap[ICON_BITMAP_INDEX])
-            return
+            return Single.just(bitmap)
         }
-        wtf { "getOrFetch: starting async task to fetch $artUrl" }
 
-        Single.just(artUrl)
+        wtf { "getOrFetch: starting async task to fetch $artUrl" }
+        return Single.just(artUrl)
                 .subscribeOn(Schedulers.io())
                 .map { url: String ->
-                    val bitmap = BitmapHelper.fetchAndRescaleBitmap(url,
+                    // when url incorrect, there will be an exception
+                    val art = BitmapHelper.fetchAndRescaleBitmap(url,
                             MAX_ART_WIDTH, MAX_ART_HEIGHT)
-                    val icon = BitmapHelper.scaleBitmap(bitmap,
+                    val icon = BitmapHelper.scaleBitmap(art,
                             MAX_ART_WIDTH_ICON, MAX_ART_HEIGHT_ICON)
-                    val bitmaps = arrayOf(bitmap, icon)
+                    val bitmaps = arrayOf(art, icon)
                     wtf { "doInBackground: putting bitmap in cache. cache size= ${mCache.size()}" }
 
                     mCache.put(artUrl, bitmaps)
                     return@map bitmaps
-                }.observeOn(AndroidSchedulers.mainThread())
-                .subscribe { bitmaps: Array<Bitmap>?, e: Throwable? ->
-                    if (bitmaps == null) {
-                        listener.onError(artUrl, IllegalArgumentException("got null bitmaps"))
-                    } else {
-                        listener.onFetched(artUrl,
-                                bitmaps[BIG_BITMAP_INDEX], bitmaps[ICON_BITMAP_INDEX])
-                    }
-                    e?.printStackTrace()
                 }
+
     }
 
 
@@ -115,6 +107,6 @@ class AlbumArtCache private constructor() {
         private val BIG_BITMAP_INDEX = 0
         private val ICON_BITMAP_INDEX = 1
 
-        public val instance = AlbumArtCache()
+        val instance = AlbumArtCache()
     }
 }

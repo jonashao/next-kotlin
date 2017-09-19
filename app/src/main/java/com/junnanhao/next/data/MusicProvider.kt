@@ -1,9 +1,9 @@
 package com.junnanhao.next.data
 
 import android.graphics.Bitmap
-import android.support.v4.media.MediaBrowserCompat.MediaItem
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
+import com.junnanhao.next.data.model.MutableMediaMetadata
+import io.reactivex.Observable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -18,14 +18,26 @@ class MusicProvider(source: MusicProviderSource) {
     private val _source: MusicProviderSource = source
 
     fun getMusic(mediaId: String?): MediaMetadataCompat? {
-        return if (mMusicListById.containsKey(mediaId)) mMusicListById[mediaId] else null
+        return if (mMusicListById.containsKey(mediaId)) mMusicListById[mediaId]?.metadata else null
     }
 
-    private val mMusicListById: ConcurrentMap<String, MediaMetadataCompat>
+    private val mMusicListById: ConcurrentMap<String, MutableMediaMetadata>
 
     init {
-        mMusicListById = ConcurrentHashMap<String, MediaMetadataCompat>()
+        mMusicListById = ConcurrentHashMap<String, MutableMediaMetadata>()
+    }
 
+    /**
+     * Get the list of music tracks from a server and caches the track information
+     * for future reference, keying tracks by musicId and grouping by genre.
+     */
+    fun retrieveMediaAsync(): Observable<Any> {
+        return Observable.create { source ->
+            if (mCurrentState != State.INITIALIZED) {
+                retrieveMusic()
+            }
+            source.onComplete()
+        }
     }
 
     fun retrieveMusic() {
@@ -37,7 +49,8 @@ class MusicProvider(source: MusicProviderSource) {
                 while (tracks.hasNext()) {
                     val item = tracks.next()
                     val musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
-                    mMusicListById.put(musicId, item)
+                    val mutableMediaMetadata = MutableMediaMetadata(musicId, item)
+                    mMusicListById.put(musicId, mutableMediaMetadata)
                 }
             }
         } finally {
@@ -69,7 +82,7 @@ class MusicProvider(source: MusicProviderSource) {
         val mutableMetadata = mMusicListById[musicId] ?:
                 throw IllegalStateException("Unexpected error: Inconsistent data structures in " + "MusicProvider")
 
-//        mutableMetadata.mediaMetadata = metadata
+        mutableMetadata.metadata = metadata
     }
 
 
@@ -77,17 +90,8 @@ class MusicProvider(source: MusicProviderSource) {
         return mCurrentState == State.INITIALIZED
     }
 
-    fun loadChildren(parentId: String): List<MediaItem> {
-        val mediaItems: MutableList<MediaItem> = ArrayList()
-        val desc = MediaDescriptionCompat.Builder().setMediaId("2")
-                .setTitle("hello")
-                .setSubtitle("Koche")
-                .build()
-        mediaItems.add(MediaItem(desc, 1))
-        return mediaItems
-    }
 
-    internal enum class State {
+    enum class State {
         NON_INITIALIZED, INITIALIZING, INITIALIZED
     }
 
@@ -97,10 +101,10 @@ class MusicProvider(source: MusicProviderSource) {
         if (mCurrentState != State.INITIALIZED) {
             return emptyList()
         }
-        val shuffled = ArrayList<MediaMetadataCompat>(mMusicListById.size)
+        val shuffled = ArrayList<MutableMediaMetadata>(mMusicListById.size)
         shuffled += mMusicListById.values
         Collections.shuffle(shuffled)
-        return shuffled
+        return shuffled.map { mutableMediaMetadata -> mutableMediaMetadata.metadata }
     }
 
     fun searchMusicByAlbum(album: String?): Iterable<MediaMetadataCompat> {

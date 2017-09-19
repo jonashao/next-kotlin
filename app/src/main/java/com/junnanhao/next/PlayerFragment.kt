@@ -3,6 +3,7 @@ package com.junnanhao.next
 import android.Manifest
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Point
 import android.graphics.Rect
 import android.os.Bundle
@@ -14,9 +15,11 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.view.GestureDetectorCompat
+import android.text.TextUtils
 import android.view.*
 import com.github.ajalt.timberkt.wtf
 import com.tbruyelle.rxpermissions2.RxPermissions
+import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.frag_player.*
 import timber.log.Timber
 
@@ -31,17 +34,65 @@ class PlayerFragment : Fragment() {
     private lateinit var mDetector: GestureDetectorCompat
     lateinit var rect: Rect
 
+    private val mSubscriptionCallback: SubscriptionCallback
+            = object : SubscriptionCallback() {
 
-    companion object {
-        fun instance(): PlayerFragment {
-            return PlayerFragment()
+        override fun onChildrenLoaded(
+                parentId: String,
+                children: MutableList<MediaItem>) {
+            super.onChildrenLoaded(parentId, children)
+
+            val mediaController: MediaControllerCompat = MediaControllerCompat
+                    .getMediaController(activity)
+            mediaController.transportControls.play()
+//            controllerCallback.onMetadataChanged()
         }
 
-        private val SWIPE_MIN_DISTANCE = 120
-        private val SWIPE_MAX_OFF_PATH = 250
-        private val SWIPE_THRESHOLD_VELOCITY = 200
+        override fun onError(id: String) {
+            wtf { "id=$id" }
+        }
     }
 
+    private var mArtUrl: String? = null
+    private val controllerCallback: MediaControllerCompat.Callback
+            = object : MediaControllerCompat.Callback() {
+
+        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+            super.onMetadataChanged(metadata)
+            wtf { "meta data changed: title = ${metadata?.description?.title}" }
+            if (metadata != null) {
+                tv_song_title.text = metadata.description?.title
+                tv_song_artist.text = metadata.description?.subtitle
+
+                val artUrl: String = metadata.description.iconUri?.toString() ?: return
+                if (TextUtils.equals(artUrl, mArtUrl)) return
+
+                mArtUrl = artUrl
+                val art = metadata.description.iconBitmap
+
+                if (art == null) {
+                    AlbumArtCache.instance.getBigImage(artUrl)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe { bitmap: Bitmap?, error: Throwable? ->
+                                if (bitmap != null) {
+                                    img_art.setImageBitmap(bitmap)
+                                }
+                                if (error != null) {
+                                    wtf { "get art failed: $error" }
+                                }
+                            }
+                } else {
+                    img_art.setImageBitmap(art)
+                }
+
+            }
+
+        }
+
+        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+            super.onPlaybackStateChanged(state)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,24 +153,6 @@ class PlayerFragment : Fragment() {
     }
 
 
-    private val mSubscriptionCallback: SubscriptionCallback
-            = object : SubscriptionCallback() {
-
-        override fun onChildrenLoaded(
-                parentId: String,
-                children: MutableList<MediaItem>) {
-            super.onChildrenLoaded(parentId, children)
-
-            val mediaController: MediaControllerCompat = MediaControllerCompat
-                    .getMediaController(activity)
-            mediaController.transportControls.play()
-        }
-
-        override fun onError(id: String) {
-            wtf { "id=$id" }
-        }
-    }
-
     private fun checkPermission() {
         RxPermissions(activity)
                 .request(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -152,28 +185,13 @@ class PlayerFragment : Fragment() {
     }
 
 
-    private val controllerCallback: MediaControllerCompat.Callback
-            = object : MediaControllerCompat.Callback() {
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            super.onMetadataChanged(metadata)
-            wtf { "meta data changed: title = ${metadata?.description?.title}" }
-            if (metadata != null) {
-                tv_song_title.text = metadata.description?.title
-                tv_song_artist.text = metadata.description?.subtitle
-            }
-        }
-
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            super.onPlaybackStateChanged(state)
-        }
-    }
-
-
     private var mMediaId: String? = null
     private val mConnectionCallbacks = object :
             MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
+            if (isDetached) {
+                return
+            }
             // Get the token for the MediaSession
             val token = mMediaBrowser.sessionToken
 
@@ -226,4 +244,13 @@ class PlayerFragment : Fragment() {
     }
 
 
+    companion object {
+        fun instance(): PlayerFragment {
+            return PlayerFragment()
+        }
+
+        private val SWIPE_MIN_DISTANCE = 120
+        private val SWIPE_MAX_OFF_PATH = 250
+        private val SWIPE_THRESHOLD_VELOCITY = 200
+    }
 }

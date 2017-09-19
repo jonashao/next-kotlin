@@ -165,19 +165,21 @@ class QueueManager(private val mMusicProvider: MusicProvider, val mListener: Met
         if (metadata.description.iconBitmap == null && metadata.description.iconUri != null) {
             val albumUri = metadata.description.iconUri!!.toString()
 
-            AlbumArtCache.instance.fetch(albumUri, object : AlbumArtCache.FetchListener() {
-                override fun onFetched(artUrl: String, bitmap: Bitmap, icon: Bitmap) {
-                    mMusicProvider.updateMusicArt(musicId, bitmap, icon)
-
-                    // If we are still playing the same music, notify the listeners:
-                    val currentMusic = currentMusic ?: return
-                    val currentPlayingId = MediaIDHelper.extractMusicIDFromMediaID(
-                            currentMusic.description.mediaId)
-                    if (musicId == currentPlayingId) {
-                        mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId)!!)
+            AlbumArtCache.instance.fetch(albumUri)
+                    .subscribe { _: Array<Bitmap>?, error: Throwable? ->
+                        if (error != null) {
+                            wtf { "update art failed :$error" }
+                            return@subscribe
+                        }
+                        // If we are still playing the same music, notify the listeners:
+                        val currentMusic = currentMusic ?: return@subscribe
+                        val currentPlayingId = MediaIDHelper.extractMusicIDFromMediaID(
+                                currentMusic.description.mediaId)
+                        if (musicId == currentPlayingId) {
+                            mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId)!!)
+                        }
                     }
-                }
-            })
+
         }
     }
 

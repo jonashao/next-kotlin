@@ -45,6 +45,7 @@ class PlaybackManager(
         val currentMusic = mQueueManager.currentMusic
         mServiceCallback.onPlaybackStart()
         playback?.play(currentMusic?.description?.mediaId ?: return)
+        mQueueManager.updateMetadata()
     }
 
     /**
@@ -153,7 +154,6 @@ class PlaybackManager(
         // and start the next.
         if (mQueueManager.skipQueuePosition(1)) {
             handlePlayRequest()
-            mQueueManager.updateMetadata()
         } else {
             // If skipping was not possible, we stop and release the resources:
             handleStopRequest(null)
@@ -215,6 +215,7 @@ class PlaybackManager(
     private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         override fun onPlay() {
             wtf { "play" }
+
             if (mQueueManager.currentMusic == null) {
                 mQueueManager.setQueueFromState(Calendar.getInstance(), null)
             }
@@ -252,7 +253,6 @@ class PlaybackManager(
 //            LogHelper.d(TAG, "skipToNext")
             if (mQueueManager.skipQueuePosition(1)) {
                 handlePlayRequest()
-                mQueueManager.updateMetadata()
             } else {
                 handleStopRequest("Cannot skip")
             }
@@ -261,8 +261,6 @@ class PlaybackManager(
         override fun onSkipToPrevious() {
             if (mQueueManager.skipQueuePosition(-1)) {
                 handlePlayRequest()
-                mQueueManager.updateMetadata()
-
             } else {
                 handleStopRequest("Cannot skip")
             }

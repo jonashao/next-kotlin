@@ -256,27 +256,9 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         }
 
         val description = mMetadata!!.description
-
-        var fetchArtUrl: String? = null
-        var art: Bitmap? = null
-        if (description.iconUri != null) {
-            // This sample assumes the iconUri will be a valid URL formatted String, but
-            // it can actually be any valid Android Uri formatted String.
-            // async fetch the album art icon
-            val artUrl = description.iconUri!!.toString()
-            art = AlbumArtCache.instance.getBigImage(artUrl)
-            if (art == null) {
-                fetchArtUrl = artUrl
-                // use a placeholder art while the remote art is being downloaded
-                art = BitmapFactory.decodeResource(mService.resources,
-                        R.drawable.ic_music)
-            }
-        }
-
         notificationBuilder
                 .setStyle(NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(
-                                *intArrayOf(playPauseButtonPosition))  // show only play/pause in compact view
+                        .setShowActionsInCompactView(playPauseButtonPosition)  // show only play/pause in compact view
                         .setMediaSession(mSessionToken))
                 .setColor(mNotificationColor)
                 .setSmallIcon(R.drawable.ic_music)
@@ -285,7 +267,28 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
                 .setContentIntent(createContentIntent(description))
                 .setContentTitle(description.title)
                 .setContentText(description.subtitle)
-                .setLargeIcon(art)
+
+        if (description.iconUri != null) {
+            // This sample assumes the iconUri will be a valid URL formatted String, but
+            // it can actually be any valid Android Uri formatted String.
+            // async fetch the album art icon
+            val artUrl = description.iconUri!!.toString()
+            AlbumArtCache.instance.getBigImage(artUrl)
+                    .subscribe { bitmap: Bitmap?, error: Throwable? ->
+                        var art = bitmap
+                        if (art == null) {
+                            art = BitmapFactory.decodeResource(mService.resources,
+                                    R.drawable.ic_music)
+                        }
+
+                        notificationBuilder.setLargeIcon(art)
+                        mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+                        if (error != null) {
+                            wtf { "get art failed: $error" }
+                        }
+                    }
+        }
+
 
         if (mController != null && mController!!.extras != null) {
             val castName = mController!!.extras.getString(MusicService.EXTRA_CONNECTED_CAST)
@@ -299,9 +302,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         }
 
         setNotificationPlaybackState(notificationBuilder)
-        if (fetchArtUrl != null) {
-            fetchBitmapFromURLAsync(fetchArtUrl, notificationBuilder)
-        }
 
         return notificationBuilder.build()
     }
@@ -349,19 +349,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         builder.setOngoing(mPlaybackState!!.state == PlaybackStateCompat.STATE_PLAYING)
     }
 
-    private fun fetchBitmapFromURLAsync(bitmapUrl: String,
-                                        builder: NotificationCompat.Builder) {
-        AlbumArtCache.instance.fetch(bitmapUrl, object : AlbumArtCache.FetchListener() {
-            override fun onFetched(artUrl: String, bitmap: Bitmap, icon: Bitmap) {
-                if (mMetadata != null && mMetadata!!.description.iconUri != null &&
-                        mMetadata!!.description.iconUri!!.toString() == artUrl) {
-                    // If the media is still the same, update the notification:
-                    builder.setLargeIcon(bitmap)
-                    mNotificationManager.notify(NOTIFICATION_ID, builder.build())
-                }
-            }
-        })
-    }
 
     companion object {
 

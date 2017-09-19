@@ -13,7 +13,7 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
 
     override fun iterator(): Iterator<MediaMetadataCompat> {
         if (!source.isInitialized()) {
-            source.scanMusic()
+            source.scanMusic().subscribe()
         }
 
         return source.getSongs().map { song ->

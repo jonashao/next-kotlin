@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import android.support.v4.content.ContentResolverCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.os.CancellationSignal
+import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.App
 import com.junnanhao.next.data.model.Song
 import io.objectbox.Box
@@ -53,22 +54,30 @@ class SongsRepository constructor(private var context: Application) : SongsDataS
                 WHERE,
                 null,
                 ORDER_BY, cancellationSignal)
+        wtf { "scan music, cursor: $cursor, count = ${cursor.count}" }
 
         return Observable.just(cursor)
+                .filter{c:Cursor?->
+                    wtf { "cursor = $c, count =${c?.count}" }
+                    return@filter c!=null
+                }
                 .subscribeOn(Schedulers.io())
                 .map { c: Cursor? ->
+                    wtf { "cursor = $c, count =${c?.count}" }
+
                     val songs: MutableList<Song> = ArrayList()
                     if (c != null && c.count > 0) {
                         c.moveToFirst()
                         do {
                             val song = Song.fromCursor(c)
+                            wtf { "song: $song" }
                             if (song != null && song.isSongValid())
                                 songs.add(song)
                         } while (c.moveToNext())
                     }
                     songs.toList()
                 }
-                .doOnNext{songs: List<Song>? ->
+                .doOnNext { songs: List<Song>? ->
                     songs?.forEach { song: Song? ->
                         val cursor1: Cursor = ContentResolverCompat.query(
                                 context.contentResolver,
@@ -79,14 +88,15 @@ class SongsRepository constructor(private var context: Application) : SongsDataS
                         if (cursor1.count > 0) {
                             if (cursor1.moveToFirst()) {
                                 song?.art = cursor1.getString(cursor1.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART))
+                                wtf { "song.art: ${song?.art}" }
                             }
                         }
                         cursor1.close()
                     }
 
+                    wtf { "songs: $songs" }
                     songBox.put(songs)
                 }
-
                 .doOnComplete { cursor.close() }
                 .doOnError { t: Throwable? ->
                     cursor.close()

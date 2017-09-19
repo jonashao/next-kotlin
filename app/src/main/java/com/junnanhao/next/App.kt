@@ -2,9 +2,9 @@ package com.junnanhao.next
 
 import android.app.Application
 import com.github.ajalt.timberkt.Timber
-import timber.log.Timber.DebugTree
 import com.junnanhao.next.data.model.MyObjectBox
 import io.objectbox.BoxStore
+import timber.log.Timber.DebugTree
 
 /**
  * Created by jonashao on 2017/9/10.
@@ -18,7 +18,10 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
         Timber.plant(DebugTree())
         boxStore = MyObjectBox.builder().androidContext(this).build()
     }
+
+
 }
