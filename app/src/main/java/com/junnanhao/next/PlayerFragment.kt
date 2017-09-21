@@ -84,8 +84,14 @@ class PlayerFragment : Fragment() {
                 AlbumArtCache.instance.getBigImage(artUrl)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { bitmap: Bitmap?, error: Throwable? ->
-                            val coverArt: Bitmap = bitmap ?:
-                                    BitmapFactory.decodeResource(resources, R.drawable.ic_music)
+                            var coverArt = bitmap
+                            if (coverArt == null) {
+                                val drawable = ContextCompat.getDrawable(context,
+                                        R.drawable.ic_music)
+                                DrawableCompat.setTint(drawable, Color.WHITE)
+                                coverArt = drawable.toBitmap()
+                            }
+
                             setCoverArt(coverArt)
                             if (error != null) {
                                 wtf { "get art failed: $error" }
