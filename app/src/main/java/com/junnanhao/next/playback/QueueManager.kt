@@ -162,8 +162,11 @@ class QueueManager(private val mMusicProvider: MusicProvider, val mListener: Met
 
         // Set the proper album artwork on the media session, so it can be shown in the
         // locked screen and in other places.
-        if (metadata.description.iconBitmap == null && metadata.description.iconUri != null) {
-            val albumUri = metadata.description.iconUri!!.toString()
+
+        val description = metadata.description
+
+        if (description.iconBitmap == null && description.iconUri != null) {
+            val albumUri = description.iconUri!!.toString()
 
             AlbumArtCache.instance.fetch(albumUri)
                     .subscribe { _: Array<Bitmap>?, error: Throwable? ->

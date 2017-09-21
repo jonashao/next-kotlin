@@ -25,7 +25,8 @@ data class Song(
         var displayName: String = "",
         var size: Int = 0,
         var album: String = "",
-        var albumId: Long = 0) {
+        var albumId: Long = 0,
+        var mbid: String? = null) {
 
     var art: String? = null
 
