@@ -54,11 +54,9 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
             source.scanMusic().subscribe()
         }
 
-        val iter = source.getSongs()
+        return source.getSongs()
                 .map { song ->
-
                     if (song.art == null && song.mbid == null) {
-
                         service.getTrack2(BuildConfig.LAST_FM_API_KEY, song.artist, song.title)
                                 .enqueue(object : Callback<TrackResponse> {
                                     override fun onFailure(call: Call<TrackResponse>?, t: Throwable?) {
@@ -67,7 +65,6 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
 
                                     override fun onResponse(call: Call<TrackResponse>?, response: Response<TrackResponse>?) {
                                         val track = response?.body()?.track
-
                                         if (track != null) {
                                             song.mbid = track.mbid
                                             song.art = track.album?.image?.
@@ -76,33 +73,20 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
                                         }
                                     }
                                 })
-
-//                        service.getTrack(BuildConfig.LAST_FM_API_KEY, song.artist, song.title)
-//                                .observeOn(Schedulers.io())
-//                                .map { t: TrackResponse? -> t?.track }
-//                                .filter { track: Track? -> track != null }
-//                                .subscribe({ track: Track? ->
-//                                    song.art = track?.album?.image?.
-//                                            getOrNull(track?.album?.image?.size - 1)?.url
-//                                    song.mbid = track?.mbid
-//                                    songBox.put(song)
-//                                }, { error: Throwable? ->
-//                                    wtf { "$error" }
-//                                })
-
                     }
+
+                    val uri = if (song.art?.startsWith("/storage") == false)
+                        song.art else "file://${song.art}"
 
                     return@map MediaMetadataCompat.Builder()
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, song.resId.toString())
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.album)
                             .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.artist)
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.duration.toLong())
-                            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, song.art)
+                            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, uri)
                             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.title)
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, song.path)
                             .build()
                 }.iterator()
-
-        return iter
     }
 }

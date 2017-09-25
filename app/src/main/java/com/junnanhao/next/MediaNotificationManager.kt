@@ -37,6 +37,13 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v7.app.NotificationCompat
+import com.facebook.common.executors.UiThreadImmediateExecutorService
+import com.facebook.common.references.CloseableReference
+import com.facebook.datasource.DataSource
+import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber
+import com.facebook.imagepipeline.image.CloseableImage
+import com.facebook.imagepipeline.request.ImageRequest
 import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.utils.ResourceHelper
 
@@ -271,31 +278,28 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
                 .setContentTitle(description.title)
                 .setContentText(description.subtitle)
 
+        // set default large icon
+        val coverArt: Drawable = ContextCompat.getDrawable(mService,
+                R.drawable.ic_music)
+        DrawableCompat.setTint(coverArt, ContextCompat.getColor(mService,
+                R.color.black_overlay))
+        notificationBuilder.setLargeIcon(coverArt.toBitmap())
 
-
+        // try to fetch large icon
         if (description.iconUri != null) {
-            // This sample assumes the iconUri will be a valid URL formatted String, but
-            // it can actually be any valid Android Uri formatted String.
-            // async fetch the album art icon
-            val artUrl = description.iconUri!!.toString()
-            AlbumArtCache.instance.getBigImage(artUrl)
-                    .subscribe { bitmap: Bitmap?, error: Throwable? ->
-                        if (bitmap != null) {
-                            notificationBuilder.setLargeIcon(bitmap)
-                            mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
-                        }
-                        if (error != null) {
-                            wtf { "get art failed: $error" }
-                        }
-                    }
-        } else {
-            val coverArt: Drawable = ContextCompat.getDrawable(mService, R.drawable
-                    .ic_music)
-            DrawableCompat.setTint(coverArt, ContextCompat.getColor(mService, R.color
-                    .black_overlay))
-            notificationBuilder.setLargeIcon(coverArt.toBitmap())
-        }
+            val imageRequest = ImageRequest.fromUri(description.iconUri)
+            val imagePipeline = Fresco.getImagePipeline()
+            val dataSource = imagePipeline.fetchDecodedImage(imageRequest, null)
+            dataSource.subscribe(object : BaseBitmapDataSubscriber() {
+                override fun onFailureImpl(dataSource: DataSource<CloseableReference<CloseableImage>>?) {
+                }
 
+                override fun onNewResultImpl(bitmap: Bitmap?) {
+                    notificationBuilder.setLargeIcon(bitmap)
+                    mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+                }
+            }, UiThreadImmediateExecutorService.getInstance())
+        }
 
         if (mController != null && mController!!.extras != null) {
             val castName = mController!!.extras.getString(MusicService.EXTRA_CONNECTED_CAST)
@@ -309,12 +313,11 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         }
 
         setNotificationPlaybackState(notificationBuilder)
-
         return notificationBuilder.build()
     }
 
 
-    fun Drawable.toBitmap(): Bitmap {
+    private fun Drawable.toBitmap(): Bitmap {
         if (this is BitmapDrawable) {
             return bitmap
         }

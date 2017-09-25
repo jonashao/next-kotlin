@@ -1,12 +1,10 @@
 package com.junnanhao.next.playback
 
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import com.github.ajalt.timberkt.wtf
-import com.junnanhao.next.AlbumArtCache
 import com.junnanhao.next.data.MusicProvider
 import com.junnanhao.next.utils.MediaIDHelper
 import com.junnanhao.next.utils.QueueHelper
@@ -153,37 +151,11 @@ class QueueManager(private val mMusicProvider: MusicProvider, val mListener: Met
             return
         }
 
-
         val musicId = MediaIDHelper.extractMusicIDFromMediaID(
                 currentMusic!!.description.mediaId)
         val metadata = mMusicProvider.getMusic(musicId) ?: throw IllegalArgumentException("Invalid musicId " + musicId)
 
         mListener.onMetadataChanged(metadata)
-
-        // Set the proper album artwork on the media session, so it can be shown in the
-        // locked screen and in other places.
-
-        val description = metadata.description
-
-        if (description.iconBitmap == null && description.iconUri != null) {
-            val albumUri = description.iconUri!!.toString()
-
-            AlbumArtCache.instance.fetch(albumUri)
-                    .subscribe { _: Array<Bitmap>?, error: Throwable? ->
-                        if (error != null) {
-                            wtf { "update art failed :$error" }
-                            return@subscribe
-                        }
-                        // If we are still playing the same music, notify the listeners:
-                        val currentMusic = currentMusic ?: return@subscribe
-                        val currentPlayingId = MediaIDHelper.extractMusicIDFromMediaID(
-                                currentMusic.description.mediaId)
-                        if (musicId == currentPlayingId) {
-                            mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId)!!)
-                        }
-                    }
-
-        }
     }
 
 

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
-    tools:context="com.junnanhao.next.ui.player.PlayerActivity">
+    tools:context="com.junnanhao.next.MainActivity">
 
     <FrameLayout
         android:id="@+id/fullscreen_content"

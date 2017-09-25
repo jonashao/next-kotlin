@@ -3,13 +3,12 @@ package com.junnanhao.next
 import android.Manifest
 import android.content.ComponentName
 import android.content.Context
-import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Point
+import android.graphics.Rect
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
-import android.support.v4.graphics.drawable.DrawableCompat
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaBrowserCompat.SubscriptionCallback
@@ -20,12 +19,15 @@ import android.support.v4.view.GestureDetectorCompat
 import android.support.v7.graphics.Palette
 import android.text.TextUtils
 import android.view.*
-import android.widget.ImageView
+import com.facebook.common.util.UriUtil
+import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.request.BasePostprocessor
+import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.github.ajalt.timberkt.wtf
 import com.tbruyelle.rxpermissions2.RxPermissions
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.frag_player.*
-import timber.log.Timber
 
 
 /**
@@ -58,96 +60,60 @@ class PlayerFragment : Fragment() {
     }
 
     private var mArtUrl: String? = null
+    private val postprocessor = object : BasePostprocessor() {
+        override fun process(bitmap: Bitmap?) {
+            super.process(bitmap)
+            Single.just(bitmap)
+                    .filter { _bitmap: Bitmap? -> _bitmap != null }
+                    .map { _bitmap: Bitmap -> Palette.from(_bitmap).generate() }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { palette: Palette? ->
+                        if (palette == null) return@subscribe
+                        val darkMutedColor = palette.getDarkMutedColor(DEFAULT_BACKGROUND)
+                        val lightVibrantColor = palette.getLightVibrantColor(DEFAULT_FOREGROUND)
+                        container.setBackgroundColor(darkMutedColor)
+                        tv_song_title.setTextColor(lightVibrantColor)
+                        tv_song_artist.setTextColor(lightVibrantColor)
+                    }
+        }
+    }
+
+
     private val controllerCallback: MediaControllerCompat.Callback
             = object : MediaControllerCompat.Callback() {
-
-
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
             wtf { "meta data changed: title = ${metadata?.description?.title}" }
             if (metadata != null) {
                 tv_song_title?.text = metadata.description?.title
                 tv_song_artist?.text = metadata.description?.subtitle
+                container.setBackgroundColor(Color.BLACK)
+                tv_song_title.setTextColor(Color.WHITE)
+                tv_song_artist.setTextColor(Color.WHITE)
 
                 val iconUri = metadata.description.iconUri
-                if (iconUri == null) {
-                    val coverArt: Drawable = ContextCompat.getDrawable(context, R.drawable
-                            .ic_music)
-                    DrawableCompat.setTint(coverArt, Color.WHITE)
-                    setCoverArt(coverArt.toBitmap())
-                    return
-                }
-
                 val artUrl = iconUri.toString()
                 if (TextUtils.equals(artUrl, mArtUrl)) return
                 mArtUrl = artUrl
-                AlbumArtCache.instance.getBigImage(artUrl)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe { bitmap: Bitmap?, error: Throwable? ->
-                            var coverArt = bitmap
-                            if (coverArt == null) {
-                                val drawable = ContextCompat.getDrawable(context,
-                                        R.drawable.ic_music)
-                                DrawableCompat.setTint(drawable, Color.WHITE)
-                                coverArt = drawable.toBitmap()
-                            }
 
-                            setCoverArt(coverArt)
-                            if (error != null) {
-                                wtf { "get art failed: $error" }
-                            }
-                        }
+                val request = ImageRequestBuilder
+                        .newBuilderWithSource(UriUtil.parseUriOrNull(mArtUrl))
+                        .setPostprocessor(postprocessor)
+                        .build()
+
+                img_art.controller = Fresco.newDraweeControllerBuilder()
+                        .setImageRequest(request)
+                        .setOldController(img_art.controller)
+                        .build()
             }
 
 
         }
 
-        fun Drawable.toBitmap(): Bitmap {
-            if (this is BitmapDrawable) {
-                return bitmap
-            }
-
-            val width = if (intrinsicWidth > 0) intrinsicWidth else 1
-            val height = if (intrinsicHeight > 0) intrinsicHeight else 1
-
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            setBounds(0, 0, canvas.width, canvas.height)
-            draw(canvas)
-            return bitmap
-        }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
         }
-
-        fun setCoverArt(bitmap: Bitmap) {
-            img_art.scaleType = ImageView.ScaleType.CENTER_CROP
-            img_art.setImageBitmap(bitmap)
-
-            val palette = Palette.from(bitmap).generate()
-            val darkMutedColor = palette.getDarkMutedColor(DEFAULT_BACKGROUND)
-            val lightVibrantColor = palette.getLightVibrantColor(DEFAULT_FOREGROUND)
-
-            container.setBackgroundColor(darkMutedColor)
-            tv_song_title.setTextColor(lightVibrantColor)
-            tv_song_artist.setTextColor(lightVibrantColor)
-        }
-
-//        fun Drawable.toBitmap(): Bitmap {
-//            if (this is BitmapDrawable) {
-//                return bitmap
-//            }
-//
-//            val width = if (intrinsicWidth > 0) intrinsicWidth else 1
-//            val height = if (intrinsicHeight > 0) intrinsicHeight else 1
-//
-//            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-//            val canvas = Canvas(bitmap)
-//            setBounds(0, 0, canvas.width, canvas.height)
-//            draw(canvas)
-//            return bitmap
-//        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -160,7 +126,6 @@ class PlayerFragment : Fragment() {
 
         mDetector = GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                Timber.wtf("fling")
                 if (rect.contains(
                         if (e1.x < e2.x) (e1.x).toInt() else e2.x.toInt(),
                         if (e1.y < e2.y) (e1.y).toInt() else e2.y.toInt(),

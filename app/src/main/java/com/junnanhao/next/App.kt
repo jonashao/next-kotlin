@@ -1,6 +1,7 @@
 package com.junnanhao.next
 
 import android.app.Application
+import com.facebook.drawee.backends.pipeline.Fresco
 import com.github.ajalt.timberkt.Timber
 import com.junnanhao.next.data.model.MyObjectBox
 import io.objectbox.BoxStore
@@ -19,6 +20,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        Fresco.initialize(this)
         Timber.plant(DebugTree())
         boxStore = MyObjectBox.builder().androidContext(this).build()
     }
