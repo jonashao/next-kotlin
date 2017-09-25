@@ -5,7 +5,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.text.TextUtils
 import com.github.ajalt.timberkt.wtf
-import com.junnanhao.next.VoiceSearchParams
+import com.junnanhao.next.data.model.VoiceSearchParams
 import com.junnanhao.next.data.MusicProvider
 import com.junnanhao.next.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_GENRE
 import com.junnanhao.next.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH

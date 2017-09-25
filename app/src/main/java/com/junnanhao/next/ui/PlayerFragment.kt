@@ -1,4 +1,4 @@
-package com.junnanhao.next
+package com.junnanhao.next.ui
 
 import android.Manifest
 import android.content.ComponentName
@@ -24,6 +24,8 @@ import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.imagepipeline.request.BasePostprocessor
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.github.ajalt.timberkt.wtf
+import com.junnanhao.next.MusicService
+import com.junnanhao.next.R
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -83,8 +85,12 @@ class PlayerFragment : Fragment() {
             = object : MediaControllerCompat.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
-            wtf { "meta data changed: title = ${metadata?.description?.title}" }
-            if (metadata != null) {
+            wtf {
+                "meta data changed: title = ${metadata?.description?.title}" +
+                        " art=${metadata?.description?.iconUri}"
+            }
+            if (metadata != null && metadata.description?.title != tv_song_title?.text) {
+
                 tv_song_title?.text = metadata.description?.title
                 tv_song_artist?.text = metadata.description?.subtitle
                 container.setBackgroundColor(Color.BLACK)
@@ -106,8 +112,6 @@ class PlayerFragment : Fragment() {
                         .setOldController(img_art.controller)
                         .build()
             }
-
-
         }
 
 

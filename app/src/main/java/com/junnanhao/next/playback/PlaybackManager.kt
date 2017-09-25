@@ -10,6 +10,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.data.MusicProvider
+import com.junnanhao.next.utils.MediaIDHelper
 import java.util.*
 
 
@@ -17,6 +18,7 @@ import java.util.*
  * Manage the interactions among the container service, the queue manager and the actual playback.
  */
 class PlaybackManager(
+        private val mLogManager: LogManager,
         private val mServiceCallback: PlaybackServiceCallback,
         private val mResources: Resources,
         private val mMusicProvider: MusicProvider,
@@ -25,6 +27,7 @@ class PlaybackManager(
 
     var playback: Playback? = null
         private set
+
 
     private val mMediaSessionCallback: MediaSessionCallback
 
@@ -42,9 +45,13 @@ class PlaybackManager(
      */
     fun handlePlayRequest() {
         wtf { "handlePlayRequest: mState= ${playback?.state}" }
-        val currentMusic = mQueueManager.currentMusic
+        val mediaId = mQueueManager.currentMusic?.description?.mediaId ?: return
+        val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
+        val track = mMusicProvider.getMusic(musicId) ?: return
+
+        mLogManager.createLog(track)
         mServiceCallback.onPlaybackStart()
-        playback?.play(currentMusic?.description?.mediaId ?: return)
+        playback?.play(mQueueManager.currentMusic?.description?.mediaId ?: return)
         mQueueManager.updateMetadata()
     }
 
@@ -54,6 +61,7 @@ class PlaybackManager(
     fun handlePauseRequest() {
         if (playback?.isPlaying() ?: return) {
             playback?.pause()
+            mLogManager.pause()
             mServiceCallback.onPlaybackStop()
         }
     }
@@ -150,6 +158,8 @@ class PlaybackManager(
      * Implementation of the Playback.Callback interface
      */
     override fun onCompletion() {
+        mLogManager.close(false)
+
         // The media player finished playing the current song, so we go ahead
         // and start the next.
         if (mQueueManager.skipQueuePosition(1)) {
@@ -251,6 +261,7 @@ class PlaybackManager(
 
         override fun onSkipToNext() {
 //            LogHelper.d(TAG, "skipToNext")
+            mLogManager.close(true)
             if (mQueueManager.skipQueuePosition(1)) {
                 handlePlayRequest()
             } else {

@@ -16,10 +16,7 @@ import com.github.ajalt.timberkt.wtf
 import com.junnanhao.next.data.MusicProvider
 import com.junnanhao.next.data.ObjectBoxMusicSource
 import com.junnanhao.next.data.SongsRepository
-import com.junnanhao.next.playback.LocalPlayback
-import com.junnanhao.next.playback.Playback
-import com.junnanhao.next.playback.PlaybackManager
-import com.junnanhao.next.playback.QueueManager
+import com.junnanhao.next.playback.*
 import java.lang.ref.WeakReference
 
 
@@ -66,7 +63,7 @@ class MusicService : MediaBrowserServiceCompat(),
         })
 
         playback = LocalPlayback(applicationContext, musicProvider)
-        playbackManager = PlaybackManager(this, resources,
+        playbackManager = PlaybackManager(LogManager(application), this, resources,
                 musicProvider, queueManager, playback)
 
         // Create a MediaSessionCompat

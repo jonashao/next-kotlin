@@ -45,6 +45,7 @@ import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber
 import com.facebook.imagepipeline.image.CloseableImage
 import com.facebook.imagepipeline.request.ImageRequest
 import com.github.ajalt.timberkt.wtf
+import com.junnanhao.next.ui.MainActivity
 import com.junnanhao.next.utils.ResourceHelper
 
 
@@ -236,7 +237,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     }
 
     private fun createNotification(): Notification? {
-        wtf { "updateNotificationMetadata. mMetadata= $mMetadata" }
         if (mMetadata == null || mPlaybackState == null) {
             return null
         }

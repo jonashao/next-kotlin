@@ -1,10 +1,11 @@
-package com.junnanhao.next
+package com.junnanhao.next.ui
 
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import com.junnanhao.next.R
 import kotlinx.android.synthetic.main.activity_fullscreen.*
 
 class MainActivity : AppCompatActivity() {

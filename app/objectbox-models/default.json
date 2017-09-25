@@ -58,9 +58,49 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "2:5293221884736564273",
+      "lastPropertyId": "8:8878369709313040989",
+      "name": "Record",
+      "properties": [
+        {
+          "id": "1:2961819016439017403",
+          "name": "id"
+        },
+        {
+          "id": "2:3020019271423921780",
+          "name": "mbid"
+        },
+        {
+          "id": "3:4365336485617747381",
+          "name": "title"
+        },
+        {
+          "id": "4:7854308382345059307",
+          "name": "artist"
+        },
+        {
+          "id": "5:3458137363897388182",
+          "name": "startTime"
+        },
+        {
+          "id": "6:2769942497368109425",
+          "name": "endTime"
+        },
+        {
+          "id": "7:7652857968804700712",
+          "name": "pauseCount"
+        },
+        {
+          "id": "8:8878369709313040989",
+          "name": "endWaySkip"
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "1:5389925251510223458",
+  "lastEntityId": "2:5293221884736564273",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",

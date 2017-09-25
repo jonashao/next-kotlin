@@ -6,22 +6,16 @@ package com.junnanhao.next.playback
  */
 
 interface Playback {
-    fun play(mediaId: String)
-
-    fun pause()
-
-    fun seekTo(position: Long)
-    /**
-     * @return boolean indicating whether the player is playing or is supposed to be
-     * playing when we gain audio focus.
-     */
-    fun isPlaying(): Boolean
-
     /**
      * Start/setup the playback.
      * Resources/listeners would be allocated by implementations.
      */
     fun start()
+
+
+    fun play(mediaId: String)
+
+    fun pause()
 
     /**
      * Stop the playback. All resources can be de-allocated by implementations here.
@@ -30,6 +24,16 @@ interface Playback {
      * the state.
      */
     fun stop(notifyListeners: Boolean)
+
+
+    fun seekTo(position: Long)
+    /**
+     * @return boolean indicating whether the player is playing or is supposed to be
+     * playing when we gain audio focus.
+     */
+    fun isPlaying(): Boolean
+
+
 
     /**
      * Get the current [android.media.session.PlaybackState.getState]

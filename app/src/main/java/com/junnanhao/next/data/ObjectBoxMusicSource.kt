@@ -60,7 +60,7 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
                         service.getTrack2(BuildConfig.LAST_FM_API_KEY, song.artist, song.title)
                                 .enqueue(object : Callback<TrackResponse> {
                                     override fun onFailure(call: Call<TrackResponse>?, t: Throwable?) {
-                                        wtf { "t :$t" }
+                                        wtf { "t :${t?.message}" }
                                     }
 
                                     override fun onResponse(call: Call<TrackResponse>?, response: Response<TrackResponse>?) {
@@ -75,8 +75,8 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
                                 })
                     }
 
-                    val uri = if (song.art?.startsWith("/storage") == false)
-                        song.art else "file://${song.art}"
+                    val uri = if (song.art?.startsWith("/storage") == true)
+                        "file://${song.art}" else song.art
 
                     return@map MediaMetadataCompat.Builder()
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, song.resId.toString())
@@ -86,6 +86,7 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, uri)
                             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.title)
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, song.path)
+                            .putString(MusicProviderSource.CUSTOM_METADATA_MBID, song.mbid)
                             .build()
                 }.iterator()
     }

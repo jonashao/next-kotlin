@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.junnanhao.next
+package com.junnanhao.next.data.model
 
 import android.os.Build
 import android.os.Bundle
