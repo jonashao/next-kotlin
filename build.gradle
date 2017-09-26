@@ -25,7 +25,7 @@ allprojects {
     }
     ext {
         // Android config
-        supportVersion = "25.4.0"
+        supportVersion = "26.1.0"
         androidBuildToolsVersion = "25.0.2"
         butterknifeVersion = "8.6.0"
         rxjavaVersion = '2.1.3'

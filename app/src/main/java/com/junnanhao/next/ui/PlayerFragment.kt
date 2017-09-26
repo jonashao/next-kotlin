@@ -72,6 +72,7 @@ class PlayerFragment : Fragment() {
                     .subscribe { palette: Palette? ->
                         if (palette == null) return@subscribe
                         val darkMutedColor = palette.getDarkMutedColor(DEFAULT_BACKGROUND)
+                        palette.darkMutedSwatch
                         val lightVibrantColor = palette.getLightVibrantColor(DEFAULT_FOREGROUND)
                         container.setBackgroundColor(darkMutedColor)
                         tv_song_title.setTextColor(lightVibrantColor)

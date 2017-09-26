@@ -17,6 +17,8 @@
 package com.junnanhao.next
 
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -27,7 +29,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.RemoteException
+import android.support.annotation.RequiresApi
+import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.graphics.drawable.DrawableCompat
@@ -36,7 +41,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.support.v7.app.NotificationCompat
 import com.facebook.common.executors.UiThreadImmediateExecutorService
 import com.facebook.common.references.CloseableReference
 import com.facebook.datasource.DataSource
@@ -79,8 +83,8 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     init {
         updateSessionToken()
 
-        mNotificationColor = ResourceHelper.getThemeColor(mService, R.attr.colorPrimary,
-                Color.DKGRAY)
+        mNotificationColor = ResourceHelper.getThemeColor(mService, R.color.next_green,
+                Color.GREEN)
 
         mNotificationManager = NotificationManagerCompat.from(mService)
 
@@ -102,12 +106,43 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         mNotificationManager.cancelAll()
     }
 
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createChannels() {
+        // create player channel
+        val playerChannel = NotificationChannel(PLAYER_CHANNEL_ID, mService.resources.getString(R
+                .string.notification_channel_player), NotificationManagerCompat.IMPORTANCE_HIGH)
+        // Sets whether notifications posted to this channel should display notification lights
+        playerChannel.enableLights(false)
+        // Sets whether notification posted to this channel should vibrate.
+        playerChannel.enableVibration(true)
+        // Sets the notification light color for notifications posted to this channel
+        playerChannel.lightColor = Color.GREEN
+        // Sets whether notifications posted to this channel appear on the lock screen or not
+        playerChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+
+        getManager()?.createNotificationChannel(playerChannel)
+    }
+
+
+    private var mManager: NotificationManager? = null
+    private fun getManager(): NotificationManager? {
+        if (mManager == null) {
+            mManager = mService.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        }
+        return mManager
+    }
+
     /**
      * Posts the notification and starts tracking the session to keep it
      * updated. The notification will automatically be removed if the session is
      * destroyed before [.stopNotification] is called.
      */
     fun startNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createChannels()
+        }
+
         if (!mStarted) {
             mMetadata = mController?.metadata
             mPlaybackState = mController?.playbackState
@@ -135,6 +170,10 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
      * was destroyed this has no effect.
      */
     fun stopNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getManager()?.deleteNotificationChannel(PLAYER_CHANNEL_ID)
+        }
+
         if (mStarted) {
             mStarted = false
             mController!!.unregisterCallback(mCb)
@@ -241,7 +280,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
             return null
         }
 
-        val notificationBuilder = NotificationCompat.Builder(mService)
+        val notificationBuilder = NotificationCompat.Builder(mService, PLAYER_CHANNEL_ID)
         var playPauseButtonPosition = 0
 
         // If skip to previous action is enabled
@@ -267,11 +306,11 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         val description = mMetadata!!.description
         notificationBuilder
-                .setStyle(NotificationCompat.MediaStyle()
+                .setStyle(android.support.v4.media.app.NotificationCompat.MediaStyle()
                         .setShowActionsInCompactView(playPauseButtonPosition)  // show only play/pause in compact view
                         .setMediaSession(mSessionToken))
                 .setColor(mNotificationColor)
-                .setSmallIcon(R.drawable.ic_music)
+                .setSmallIcon(R.drawable.ic_next_sm)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setUsesChronometer(true)
                 .setContentIntent(createContentIntent(description))
@@ -386,5 +425,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         val ACTION_PREV = "com.junnanhao.next.prev"
         val ACTION_NEXT = "com.junnanhao.next.next"
         val ACTION_STOP_CASTING = "com.junnanhao.next.stop_cast"
+
+        val PLAYER_CHANNEL_ID = "com.junnanhao.next.player_channel"
     }
 }
