@@ -25,5 +25,7 @@ calculating foot frequency every 10 seconds or 30 steps.
 - ObjectBox
 
 ## Todo
-- [ ] fetching album arts from Last.fm
-- [ ] recording playing behaivours to recommend music
+-[x] fetch album arts from Last.fm
+-[ ] record playing behaviors to recommend music
+-[ ] display player state and message
+

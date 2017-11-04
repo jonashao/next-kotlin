@@ -8,5 +8,6 @@ interface MusicProviderSource {
         val CUSTOM_METADATA_MBID: String = "__mbid__"
     }
 
+
     operator fun iterator(): Iterator<MediaMetadataCompat>
 }

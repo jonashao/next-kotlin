@@ -25,8 +25,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
 
     private val source: SongsDataSource = SongsRepository(application)
-
-
     private val retrofit: Retrofit
     private val service: LastFmService
     private val songBox: Box<Song> = (application as App).boxStore.boxFor(Song::class.java)
@@ -45,7 +43,6 @@ class ObjectBoxMusicSource(application: Application) : MusicProviderSource {
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.createAsync())
                 .build()
         service = retrofit.create<LastFmService>(LastFmService::class.java)
-
     }
 
 

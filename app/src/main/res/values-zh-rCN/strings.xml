@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Next</string>
-    <string name="dummy_button">按钮</string>
     <string name="song_title">歌曲名</string>
     <string name="artist">艺术家</string>
     <string name="album_art">封面</string>
@@ -10,4 +9,34 @@
     <string name="permission_reason">来扫描本地歌曲</string>
     <string name="warning_cannot_get_audio_focus">无法控制音量</string>
     <string name="scan_over">扫描完毕！</string>
+    <string name="label_pause">暂停</string>
+    <string name="notification_channel_player">Next播放器</string>
+    <string name="media_route_menu_title">播放</string>
+    <string name="no_search_results">无搜索结果</string>
+    <string name="search_queue_title">搜索结果</string>
+    <string name="related_content_header">你可能也喜欢</string>
+    <string name="error_no_metadata">无法获取数据</string>
+    <string name="touch_to_cast">点击链接谷歌Cast设备</string>
+    <string name="stop_casting">停止投影</string>
+    <string name="browse_genre_subtitle">曲风</string>
+    <string name="currently_playing_song">正在播放</string>
+    <string name="skip_prev">上一首</string>
+    <string name="skip_next">下一首</string>
+    <string name="random_queue_title">随机</string>
+    <string name="label_previous">上一首</string>
+    <string name="play_pause">播放或暂停</string>
+    <string name="drawer_playlists_title">歌单</string>
+    <string name="play_item">歌曲</string>
+    <string name="label_play">播放</string>
+    <string name="open_content_drawer">打开主菜单</string>
+    <string name="now_playing">正在播放</string>
+    <string name="label_next">下一首</string>
+    <string name="action_listen">听</string>
+    <string name="home_title">首页</string>
+    <string name="browse_genres">流派</string>
+    <string name="favorite">喜爱</string>
+    <string name="currently_playing_extra_info">提取当前播放歌曲信息</string>
+    <string name="error_loading_media">加载媒体错误</string>
+    <string name="close_content_drawer">关闭主菜单</string>
+    <string name="drawer_allmusic_title">所有音乐</string>
 </resources>

@@ -33,8 +33,6 @@ interface Playback {
      */
     fun isPlaying(): Boolean
 
-
-
     /**
      * Get the current [android.media.session.PlaybackState.getState]
 
@@ -67,10 +65,6 @@ interface Playback {
          */
         fun onError(error: String)
 
-        /**
-         * @param mediaId being currently played
-         */
-        fun setCurrentMediaId(mediaId: String)
     }
 
     fun setCallback(callback: Callback)

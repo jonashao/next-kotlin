@@ -2,6 +2,7 @@ package com.junnanhao.next.data
 
 import android.graphics.Bitmap
 import android.support.v4.media.MediaMetadataCompat
+import com.junnanhao.next.data.model.Cluster
 import com.junnanhao.next.data.model.MutableMediaMetadata
 import io.reactivex.Observable
 import java.util.*
@@ -17,14 +18,21 @@ class MusicProvider(source: MusicProviderSource) {
 
     private val _source: MusicProviderSource = source
 
+    fun getMusic(mediaId: Long?): MediaMetadataCompat? {
+        return mMusicListById2[mediaId]
+    }
+
+
     fun getMusic(mediaId: String?): MediaMetadataCompat? {
         return if (mMusicListById.containsKey(mediaId)) mMusicListById[mediaId]?.metadata else null
     }
 
     private val mMusicListById: ConcurrentMap<String, MutableMediaMetadata>
+    private val mMusicListById2: ConcurrentMap<Long, MediaMetadataCompat>
 
     init {
         mMusicListById = ConcurrentHashMap<String, MutableMediaMetadata>()
+        mMusicListById2 = ConcurrentHashMap<Long, MediaMetadataCompat>()
     }
 
     /**
@@ -40,7 +48,7 @@ class MusicProvider(source: MusicProviderSource) {
         }
     }
 
-    fun retrieveMusic() {
+    private fun retrieveMusic() {
         try {
             if (mCurrentState == State.NON_INITIALIZED) {
                 mCurrentState = State.INITIALIZING
@@ -112,6 +120,11 @@ class MusicProvider(source: MusicProviderSource) {
     }
 
     fun searchMusicBySongTitle(query: String): Iterable<MediaMetadataCompat> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    fun getShuffledCluster(calendar: Calendar?, nothing: Nothing?): Cluster {
+
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

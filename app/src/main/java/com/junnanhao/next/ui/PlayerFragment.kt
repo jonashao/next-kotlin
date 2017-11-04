@@ -50,6 +50,9 @@ class PlayerFragment : Fragment() {
                 children: MutableList<MediaItem>) {
             super.onChildrenLoaded(parentId, children)
 
+            tv_song_title.text = getString(R.string.loading)
+            tv_song_artist.text = ""
+
             val mediaController: MediaControllerCompat = MediaControllerCompat
                     .getMediaController(activity)
             mediaController.transportControls.play()

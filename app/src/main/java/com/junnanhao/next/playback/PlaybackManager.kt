@@ -1,15 +1,13 @@
 package com.junnanhao.next.playback
 
 import android.content.Intent
-import android.content.res.Resources
-import android.os.AsyncTask
 import android.os.Bundle
 import android.os.SystemClock
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import com.github.ajalt.timberkt.wtf
-import com.junnanhao.next.data.MusicProvider
+import com.junnanhao.next.R
 import com.junnanhao.next.utils.MediaIDHelper
 import java.util.*
 
@@ -17,13 +15,8 @@ import java.util.*
 /**
  * Manage the interactions among the container service, the queue manager and the actual playback.
  */
-class PlaybackManager(
-        private val mLogManager: LogManager,
-        private val mServiceCallback: PlaybackServiceCallback,
-        private val mResources: Resources,
-        private val mMusicProvider: MusicProvider,
-        private val mQueueManager: QueueManager,
-        playback: Playback) : Playback.Callback {
+class PlaybackManager(playback: Playback, val chainManager: ChainManager,
+                      val callback: PlaybackServiceCallback) : Playback.Callback {
 
     var playback: Playback? = null
         private set
@@ -45,14 +38,12 @@ class PlaybackManager(
      */
     fun handlePlayRequest() {
         wtf { "handlePlayRequest: mState= ${playback?.state}" }
-        val mediaId = mQueueManager.currentMusic?.description?.mediaId ?: return
-        val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
-        val track = mMusicProvider.getMusic(musicId) ?: return
+        if (playback?.state == PlaybackStateCompat.STATE_PLAYING) return
+        val mediaId: String = chainManager.current()?.description?.mediaId ?: return
 
-        mLogManager.createLog(track)
-        mServiceCallback.onPlaybackStart()
-        playback?.play(mQueueManager.currentMusic?.description?.mediaId ?: return)
-        mQueueManager.updateMetadata()
+        callback.onPlaybackStart()
+        playback?.play(mediaId)
+        chainManager.updateMetaData()
     }
 
     /**
@@ -61,8 +52,7 @@ class PlaybackManager(
     fun handlePauseRequest() {
         if (playback?.isPlaying() ?: return) {
             playback?.pause()
-            mLogManager.pause()
-            mServiceCallback.onPlaybackStop()
+            callback.onPlaybackStop()
         }
     }
 
@@ -75,8 +65,8 @@ class PlaybackManager(
      */
     fun handleStopRequest(withError: String?) {
         wtf { "handleStopRequest: mState=${playback?.state} error=$withError" }
-        playback!!.stop(true)
-        mServiceCallback.onPlaybackStop()
+        playback?.stop(true)
+        callback.onPlaybackStop()
         updatePlaybackState(withError)
     }
 
@@ -88,6 +78,8 @@ class PlaybackManager(
      */
     fun updatePlaybackState(error: String?) {
         wtf { "updatePlaybackState, playback state= ${playback?.state}" }
+        if (playback == null) return
+
         val position = playback?.currentStreamPosition ?:
                 PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN
 
@@ -107,36 +99,45 @@ class PlaybackManager(
 
         stateBuilder.setState(state, position, 1.0f, SystemClock.elapsedRealtime())
 
-        // Set the activeQueueItemId if the current index is valid.
-        val currentMusic = mQueueManager.currentMusic
-        if (currentMusic != null) {
-            stateBuilder.setActiveQueueItemId(currentMusic.queueId)
-        }
-
-        mServiceCallback.onPlaybackStateUpdated(stateBuilder.build())
+        callback.onPlaybackStateUpdated(stateBuilder.build())
 
         if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
-            mServiceCallback.onNotificationRequired()
+            callback.onNotificationRequired()
         }
     }
 
+    /**
+     * Implementation of the Playback.Callback interface
+     */
+    override fun onCompletion() {
+
+        // The media player finished playing the current song, so we go ahead
+        // and start the next.
+        if (chainManager.next(false)) {
+            handlePlayRequest()
+        } else {
+            // If skipping was not possible, we stop and release the resources:
+            handleStopRequest(null)
+        }
+    }
+
+
     private fun setCustomAction(stateBuilder: PlaybackStateCompat.Builder) {
-//        val currentMusic = mQueueManager.currentMusic ?: return
-//// Set appropriate "Favorite" icon on Custom action:
-//        val mediaId = currentMusic.description.mediaId ?: return
-//        val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
+        val currentMusic = chainManager.current() ?: return
+// Set appropriate "Favorite" icon on Custom action:
+        val mediaId = currentMusic.description.mediaId ?: return
+        val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
 //        val favoriteIcon = if (mMusicProvider.isFavorite(musicId))
-//            R.drawable.ic_star_on
+//            R.drawable.ic_favorite_black_24dp
 //        else
-//            R.drawable.ic_star_off
-//        LogHelper.d(TAG, "updatePlaybackState, setting Favorite custom action of music ",
-//                musicId, " current favorite=", mMusicProvider.isFavorite(musicId))
-//        val customActionExtras = Bundle()
-//        WearHelper.setShowCustomActionOnWear(customActionExtras, true)
-//        stateBuilder.addCustomAction(PlaybackStateCompat.CustomAction.Builder(
-//                CUSTOM_ACTION_THUMBS_UP, mResources.getString(R.string.favorite), favoriteIcon)
-//                .setExtras(customActionExtras)
-//                .build())
+//            R.drawable.ic_favorite_border_black_24dp
+        val favoriteIcon = R.drawable.ic_favorite_black_24dp
+
+        val customActionExtras = Bundle()
+        stateBuilder.addCustomAction(PlaybackStateCompat.CustomAction.Builder(
+                CUSTOM_ACTION_THUMBS_UP, "favorite", favoriteIcon)
+                .setExtras(customActionExtras)
+                .build())
     }
 
     private val availableActions: Long
@@ -154,21 +155,6 @@ class PlaybackManager(
             return actions
         }
 
-    /**
-     * Implementation of the Playback.Callback interface
-     */
-    override fun onCompletion() {
-        mLogManager.close(false)
-
-        // The media player finished playing the current song, so we go ahead
-        // and start the next.
-        if (mQueueManager.skipQueuePosition(1)) {
-            handlePlayRequest()
-        } else {
-            // If skipping was not possible, we stop and release the resources:
-            handleStopRequest(null)
-        }
-    }
 
     override fun onPlaybackStatusChanged(state: Int) {
         updatePlaybackState(null)
@@ -178,105 +164,35 @@ class PlaybackManager(
         updatePlaybackState(error)
     }
 
-    override fun setCurrentMediaId(mediaId: String) {
-        mQueueManager.setQueueFromMusic(mediaId)
-    }
-
-
-    /**
-     * Switch to a different Playback instance, maintaining all playback state, if possible.
-     *
-     * @param playback switch to this playback
-     */
-    fun switchToPlayback(playback: Playback?, resumePlaying: Boolean) {
-//        if (playback == null) {
-//            throw IllegalArgumentException("Playback cannot be null")
-//        }
-//        // Suspends current state.
-//        val oldState = this.playback!!.state
-//        val pos = this.playback!!.currentStreamPosition
-//        val currentMediaId = this.playback!!.currentMediaId
-//        this.playback!!.stop(false)
-//        playback.setCallback(this)
-//        playback.currentMediaId = currentMediaId
-//        playback.seekTo(if (pos < 0) 0 else pos)
-//        playback.start()
-//        // Swaps instance.
-//        this.playback = playback
-//        when (oldState) {
-//            PlaybackStateCompat.STATE_BUFFERING, PlaybackStateCompat.STATE_CONNECTING, PlaybackStateCompat.STATE_PAUSED -> this.playback!!.pause()
-//            PlaybackStateCompat.STATE_PLAYING -> {
-//                val currentMusic = mQueueManager.currentMusic
-//                if (resumePlaying && currentMusic != null) {
-//                    this.playback!!.play(currentMusic)
-//                } else if (!resumePlaying) {
-//                    this.playback!!.pause()
-//                } else {
-//                    this.playback!!.stop(true)
-//                }
-//            }
-//            PlaybackStateCompat.STATE_NONE -> {
-//            }
-//            else -> LogHelper.d(TAG, "Default called. Old state is ", oldState)
-//        }
-    }
-
 
     private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         override fun onPlay() {
             wtf { "play" }
-
-            if (mQueueManager.currentMusic == null) {
-                mQueueManager.setQueueFromState(Calendar.getInstance(), null)
+            if (chainManager.current() == null) {
+                chainManager.guess(Calendar.getInstance(), null)
             }
-
-            handlePlayRequest()
-        }
-
-        override fun onSkipToQueueItem(queueId: Long) {
-//            LogHelper.d(TAG, "OnSkipToQueueItem:" + queueId)
-            mQueueManager.setCurrentQueueItem(queueId)
-        }
-
-        override fun onSeekTo(position: Long) {
-//            LogHelper.d(TAG, "onSeekTo:", position)
-            playback!!.seekTo(position.toInt().toLong())
-        }
-
-        override fun onPlayFromMediaId(mediaId: String, extras: Bundle?) {
-//            LogHelper.d(TAG, "playFromMediaId mediaId:", mediaId, "  extras=", extras)
-            mQueueManager.setQueueFromMusic(mediaId)
             handlePlayRequest()
         }
 
         override fun onPause() {
-//            LogHelper.d(TAG, "pause. current state=" + playback!!.state)
+            wtf { "pause" }
             handlePauseRequest()
         }
 
         override fun onStop() {
-//            LogHelper.d(TAG, "stop. current state=" + playback!!.state)
             handleStopRequest(null)
         }
 
         override fun onSkipToNext() {
-//            LogHelper.d(TAG, "skipToNext")
-            mLogManager.close(true)
-            if (mQueueManager.skipQueuePosition(1)) {
-                handlePlayRequest()
-            } else {
-                handleStopRequest("Cannot skip")
+            wtf { "skip to next" }
+            if (playback?.isPlaying() == true) {
+                if (chainManager.next(true)) {
+                    handlePlayRequest()
+                } else {
+                    handleStopRequest("Cannot skip")
+                }
             }
         }
-
-        override fun onSkipToPrevious() {
-            if (mQueueManager.skipQueuePosition(-1)) {
-                handlePlayRequest()
-            } else {
-                handleStopRequest("Cannot skip")
-            }
-        }
-
 
         override fun onMediaButtonEvent(mediaButtonEvent: Intent): Boolean {
             val keyEvent = mediaButtonEvent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
@@ -302,55 +218,27 @@ class PlaybackManager(
         }
 
         override fun onCustomAction(action: String, extras: Bundle?) {
-            if (action == ACTION_SCAN) {
-                mServiceCallback.onSource()
+            if (ACTION_SCAN == action) {
+                callback.onSource()
             }
-//            if (CUSTOM_ACTION_THUMBS_UP == action) {
-//                LogHelper.i(TAG, "onCustomAction: favorite for current track")
-//                val currentMusic = mQueueManager.currentMusic
-//                if (currentMusic != null) {
-//                    val mediaId = currentMusic.description.mediaId
-//                    if (mediaId != null) {
-//                        val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
+
+            if (CUSTOM_ACTION_THUMBS_UP == action) {
+                val currentMusic = chainManager.current()
+                if (currentMusic != null) {
+                    val mediaId = currentMusic.description.mediaId
+                    if (mediaId != null) {
+                        val musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId)
 //                        mMusicProvider.setFavorite(musicId, !mMusicProvider.isFavorite(musicId))
-//                    }
-//                }
-//                // playback state needs to be updated because the "Favorite" icon on the
-//                // custom action will change to reflect the new favorite state.
-//                updatePlaybackState(null)
-//            } else {
-//                LogHelper.e(TAG, "Unsupported action: ", action)
-//            }
+                    }
+                }
+                // playback state needs to be updated because the "Favorite" icon on the
+                // custom action will change to reflect the new favorite state.
+                updatePlaybackState(null)
+            } else {
+                wtf { "Unsupported action: $action" }
+            }
         }
 
-        /**
-         * Handle free and contextual searches.
-         *
-         *
-         * All voice searches on Android Auto are sent to this method through a connected
-         * [android.support.v4.media.session.MediaControllerCompat].
-         *
-         *
-         * Threads and async handling:
-         * Search, as a potentially slow operation, should run in another thread.
-         *
-         *
-         * Since this method runs on the main thread, most apps with non-trivial metadata
-         * should defer the actual search to another thread (for example, by using
-         * an [AsyncTask] as we do here).
-         */
-        override fun onPlayFromSearch(query: String?, extras: Bundle?) {
-//            LogHelper.d(TAG, "playFromSearch  query=", query, " extras=", extras)
-//
-//            playback!!.state = PlaybackStateCompat.STATE_CONNECTING
-//            val successSearch = mQueueManager.setQueueFromSearch(query, extras)
-//            if (successSearch) {
-//                handlePlayRequest()
-//                mQueueManager.updateMetadata()
-//            } else {
-//                updatePlaybackState("Could not find music")
-//            }
-        }
     }
 
 

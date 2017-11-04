@@ -98,10 +98,48 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "3:8836922074187047255",
+      "lastPropertyId": "1:3039684814473408330",
+      "name": "Cluster",
+      "properties": [
+        {
+          "id": "1:3039684814473408330",
+          "name": "id"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:6956555321611202334",
+      "lastPropertyId": "4:686932639959323499",
+      "name": "ClusterMembership",
+      "properties": [
+        {
+          "id": "1:8135685907885604481",
+          "name": "id"
+        },
+        {
+          "id": "2:1236474682744980074",
+          "name": "membership"
+        },
+        {
+          "id": "3:4475694740025433391",
+          "indexId": "1:6836789378517783015",
+          "name": "clusterId"
+        },
+        {
+          "id": "4:686932639959323499",
+          "indexId": "2:2052746911721191889",
+          "name": "songId"
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "2:5293221884736564273",
-  "lastIndexId": "0:0",
+  "lastEntityId": "4:6956555321611202334",
+  "lastIndexId": "2:2052746911721191889",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 3,

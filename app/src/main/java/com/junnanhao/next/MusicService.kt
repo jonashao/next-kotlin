@@ -8,7 +8,6 @@ import android.os.Message
 import android.os.RemoteException
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaBrowserServiceCompat
-import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
@@ -31,41 +30,27 @@ class MusicService : MediaBrowserServiceCompat(),
     private var mMediaSession: MediaSessionCompat? = null
     private var mStateBuilder: PlaybackStateCompat.Builder? = null
     private lateinit var musicProvider: MusicProvider
-    private lateinit var queueManager: QueueManager
     private lateinit var playbackManager: PlaybackManager
     private lateinit var playback: Playback
     private var mMediaNotificationManager: MediaNotificationManager? = null
     private val mDelayedStopHandler = DelayedStopHandler(this)
+    private lateinit var mChainManager: ChainManager
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            mMediaNotificationManager = MediaNotificationManager(this)
+        } catch (e: RemoteException) {
+            throw IllegalStateException("Could not create a MediaNotificationManager", e)
+        }
         musicProvider = MusicProvider(ObjectBoxMusicSource(application))
-        musicProvider.retrieveMusic()
-
-        queueManager = QueueManager(musicProvider, object : QueueManager.MetadataUpdateListener {
-            override fun onMetadataChanged(metadata: MediaMetadataCompat) {
-                mMediaSession?.setMetadata(metadata)
-            }
-
-            override fun onMetadataRetrieveError() {
-//                playbackManager.updatePlaybackState(
-//                        getString(R.string.error_no_metadata))
-            }
-
-            override fun onCurrentQueueIndexUpdated(queueIndex: Int) {
-                playbackManager.handlePlayRequest()
-            }
-
-            override fun onQueueUpdated(title: String,
-                                        newQueue: List<MediaSessionCompat.QueueItem>) {
-                mMediaSession?.setQueue(newQueue)
-            }
-        })
-
+        mChainManager = ChainManagerImpl(musicProvider, application as App)
         playback = LocalPlayback(applicationContext, musicProvider)
-        playbackManager = PlaybackManager(LogManager(application), this, resources,
-                musicProvider, queueManager, playback)
+        playbackManager = PlaybackManager(playback, mChainManager, this)
+        initMediaSession()
+    }
 
+    private fun initMediaSession() {
         // Create a MediaSessionCompat
         mMediaSession = MediaSessionCompat(applicationContext, LOG_TAG)
 
@@ -85,14 +70,8 @@ class MusicService : MediaBrowserServiceCompat(),
 
         // MySessionCallback() has methods that handle callbacks from a media controller
         mMediaSession!!.setCallback(playbackManager.mediaSessionCallback)
-
-        try {
-            mMediaNotificationManager = MediaNotificationManager(this)
-        } catch (e: RemoteException) {
-            throw IllegalStateException("Could not create a MediaNotificationManager", e)
-        }
-
     }
+
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?)
             : MediaBrowserServiceCompat.BrowserRoot? {
@@ -110,6 +89,7 @@ class MusicService : MediaBrowserServiceCompat(),
     }
 
     private fun allowBrowsing(clientPackageName: String, clientUid: Int): Boolean {
+        wtf { "client package name: $clientPackageName, client Uid: $clientUid" }
         return true
     }
 
@@ -143,17 +123,6 @@ class MusicService : MediaBrowserServiceCompat(),
     }
 
 
-    override fun onPlaybackStart() {
-
-        mMediaSession?.isActive = true
-        mDelayedStopHandler.removeCallbacksAndMessages(null)
-
-        // The service needs to continue running even after the bound client (usually a
-        // MediaController) disconnects, otherwise the music playback will stop.
-        // Calling startService(Intent) will keep the service running until it is explicitly killed.
-        startService(Intent(applicationContext, MusicService::class.java))
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         wtf { "onDestroy" }
@@ -174,6 +143,16 @@ class MusicService : MediaBrowserServiceCompat(),
                 .subscribe()
     }
 
+    override fun onPlaybackStart() {
+
+        mMediaSession?.isActive = true
+        mDelayedStopHandler.removeCallbacksAndMessages(null)
+
+        // The service needs to continue running even after the bound client (usually a
+        // MediaController) disconnects, otherwise the music playback will stop.
+        // Calling startService(Intent) will keep the service running until it is explicitly killed.
+        startService(Intent(applicationContext, MusicService::class.java))
+    }
 
     override fun onPlaybackStop() {
         mMediaSession?.isActive = false
@@ -216,7 +195,7 @@ class MusicService : MediaBrowserServiceCompat(),
         private val LOG_TAG = "NextMusicService"
         // The action of the incoming Intent indicating that it contains a command
         // to be executed (see {@link #onStartCommand})
-        val ACTION_CMD = "com.example.android.uamp.ACTION_CMD"
+        val ACTION_CMD = "com.junnanhao.next.ACTION_CMD"
         // The key in the extras of the incoming Intent indicating the command that
         // should be executed (see {@link #onStartCommand})
         val CMD_NAME = "CMD_NAME"
@@ -227,9 +206,8 @@ class MusicService : MediaBrowserServiceCompat(),
         // to local playback from cast playback.
         val CMD_STOP_CASTING = "CMD_STOP_CASTING"
 
-
         // Extra on MediaSession that contains the Cast device name currently connected to
-        val EXTRA_CONNECTED_CAST = "com.example.android.uamp.CAST_NAME"
+        val EXTRA_CONNECTED_CAST = "com.junnanhao.next.CAST_NAME"
 
         // Delay stopSelf by using a handler.
         private val STOP_DELAY = 30000
